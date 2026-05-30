@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سیستم مدیریت تامین‌کننده | OMS</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { font-family: 'Vazirmatn', sans-serif; }
+  body { background: #f1f5f9; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+  .pulse-dot { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useMemo, useRef } = React;
+
+// ====== تنظیمات پروکسی ======
+// بعد از ساخت Cloudflare Worker، آدرسش رو اینجا بذار
+// مثال: https://my-proxy.username.workers.dev
+let PROXY_URL = localStorage.getItem("proxy_url") || "";
+
+const AVAILABILITY = ["موجود", "استعلام", "ناموجود"];
+const ORDER_STATUS = ["جدید", "درحال تامین", "ارسال شد", "تحویل شد", "لغو شد"];
+const CATEGORIES = ["کراتین","ماسک مو","شامپو","رنگ مو","اکسیدان","سرم","روغن","سایر"];
+const fmt = n => (n||0).toLocaleString("fa-IR");
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const nowStr = () => new Date().toLocaleString("fa-IR");
+
+const supplierColor = name => {
+  if(!name) return {bg:"#e2e8f0",text:"#334155",border:"#94a3b8"};
+  const colors=[
+    {bg:"#dcfce7",text:"#166534",border:"#22c55e"},
+    {bg:"#fef3c7",text:"#92400e",border:"#f59e0b"},
+    {bg:"#dbeafe",text:"#1e40af",border:"#3b82f6"},
+    {bg:"#fce7f3",text:"#9f1239",border:"#ec4899"},
+    {bg:"#e0e7ff",text:"#3730a3",border:"#6366f1"},
+    {bg:"#fed7aa",text:"#9a3412",border:"#f97316"},
+  ];
+  let h=0; for(let i=0;i<name.length;i++) h=name.charCodeAt(i)+((h<<5)-h);
+  return colors[Math.abs(h)%colors.length];
+};
+const availColor = s => s==="موجود"?"bg-green-100 text-green-700 border-green-300":s==="استعلام"?"bg-amber-100 text-amber-700 border-amber-300":"bg-red-100 text-red-700 border-red-300";
+const statusColor = s => ({"جدید":"bg-blue-100 text-blue-700","درحال تامین":"bg-purple-100 text-purple-700","ارسال شد":"bg-amber-100 text-amber-700","تحویل شد":"bg-green-100 text-green-700","لغو شد":"bg-red-100 text-red-700"})[s]||"bg-gray-100 text-gray-700";
+
+// ====== fetch از طریق پروکسی ======
+async function fetchViaProxy(url) {
+  if(!PROXY_URL) throw new Error("پروکسی تنظیم نشده");
+  const res = await fetch(`${PROXY_URL}?url=${encodeURIComponent(url)}`);
+  if(!res.ok) throw new Error("خطا در پروکسی");
+  return res.json();
+}
+
+async function fetchAliProducts(onProgress) {
+  const all=[], perPage=100;
+  let page=1, totalPages=1;
+  do {
+    const url=`https://aliversache.com/wp-json/wc/store/v1/products?page=${page}&per_page=${perPage}`;
+    let data;
+    try {
+      // اول مستقیم امتحان میکنه
+      const res = await fetch(url);
+      if(res.ok) { totalPages=parseInt(res.headers.get("X-WP-TotalPages")||"1",10); data=await res.json(); }
+      else throw new Error();
+    } catch {
+      // از پروکسی استفاده میکنه
+      data = await fetchViaProxy(url);
+      totalPages = data.length < perPage ? page : page+1;
+    }
+    for(const raw of data) {
+      const prices=raw.prices||{};
+      let brand="";
+      for(const a of (raw.attributes||[])) { if(a.taxonomy==="pa_brand"&&a.terms?.length){brand=a.terms[0].name||"";break;} }
+      const img=raw.images?.[0]||{};
+      all.push({
+        id:raw.id, name:(raw.name||"").replace(/&amp;/g,"&"),
+        link:raw.permalink||"", price:parseInt(prices.price||"0",10),
+        inStock:!!raw.is_in_stock, availability:raw.is_in_stock?"موجود":"ناموجود",
+        image:img.src||"", brand, categories:(raw.categories||[]).map(c=>c.name||""),
+      });
+    }
+    onProgress?.(all.length); page++;
+  } while(page<=totalPages&&page<=10);
+  return all;
+}
+
+const STORAGE_KEY="oms_v2";
+const loadData=()=>{try{const r=localStorage.getItem(STORAGE_KEY);if(r)return JSON.parse(r);}catch{}return{products:[],orders:[]};};
+const saveData=d=>localStorage.setItem(STORAGE_KEY,JSON.stringify(d));
+
+function App() {
+  const [tab,setTab]=useState("dashboard");
+  const [data,setData]=useState(loadData);
+  const [dirty,setDirty]=useState(false);
+  const [lastSaved,setLastSaved]=useState(nowStr());
+  const [toast,setToast]=useState(null);
+  const [showProxyModal,setShowProxyModal]=useState(!PROXY_URL);
+  const [proxyInput,setProxyInput]=useState(PROXY_URL);
+  const dataRef=useRef(data);
+  dataRef.current=data;
+
+  useEffect(()=>{
+    setDirty(true);
+    const t=setTimeout(()=>{saveData(data);setLastSaved(nowStr());setDirty(false);},1500);
+    return()=>clearTimeout(t);
+  },[data]);
+
+  useEffect(()=>{
+    const fn=()=>saveData(dataRef.current);
+    window.addEventListener("beforeunload",fn);
+    return()=>window.removeEventListener("beforeunload",fn);
+  },[]);
+
+  const showToast=(msg,type="success")=>{setToast({msg,type});setTimeout(()=>setToast(null),3000);};
+  const setProducts=fn=>setData(prev=>({...prev,products:typeof fn==="function"?fn(prev.products):fn}));
+  const setOrders=fn=>setData(prev=>({...prev,orders:typeof fn==="function"?fn(prev.orders):fn}));
+  const suppliers=useMemo(()=>[...new Set(data.products.map(p=>p.supplier).filter(Boolean))],[data.products]);
+
+  const saveProxy=()=>{
+    PROXY_URL=proxyInput.trim();
+    localStorage.setItem("proxy_url",PROXY_URL);
+    setShowProxyModal(false);
+    showToast("آدرس پروکسی ذخیره شد ✅");
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100">
+      {/* Proxy Setup Modal */}
+      {showProxyModal&&(
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="text-center mb-4">
+              <div className="text-4xl mb-2">⚙️</div>
+              <h2 className="text-xl font-bold">تنظیم پروکسی</h2>
+              <p className="text-sm text-slate-500 mt-1">برای همگام‌سازی با علی ورساچ نیاز به آدرس Worker داری</p>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 text-sm text-amber-700">
+              📋 اگه هنوز Worker نساختی، فعلاً این پنجره رو ببند و بعداً از تنظیمات وارد کن
+            </div>
+            <input value={proxyInput} onChange={e=>setProxyInput(e.target.value)}
+              placeholder="https://my-proxy.username.workers.dev"
+              className="w-full px-3 py-2 border rounded-lg mb-3 text-sm" dir="ltr"/>
+            <div className="flex gap-2">
+              <button onClick={saveProxy} className="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-bold">ذخیره</button>
+              <button onClick={()=>setShowProxyModal(false)} className="flex-1 bg-slate-200 py-2 rounded-lg font-bold">بعداً</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6">
+          <div className="flex items-center justify-between py-3 flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl">💎</div>
+              <div>
+                <h1 className="text-base font-bold text-slate-800">سیستم مدیریت تامین‌کننده</h1>
+                <div className="text-xs text-slate-500 flex items-center gap-1">
+                  <span className={`w-2 h-2 rounded-full ${dirty?"bg-amber-500 pulse-dot":"bg-emerald-500"}`}></span>
+                  {lastSaved}
+                </div>
+              </div>
+            </div>
+            <button onClick={()=>setShowProxyModal(true)} className="text-xs px-3 py-1.5 bg-slate-100 rounded-lg text-slate-600">⚙️ تنظیم پروکسی</button>
+          </div>
+          <div className="flex gap-1 overflow-x-auto pb-0">
+            {[{id:"dashboard",l:"داشبورد",i:"📊"},{id:"products",l:"محصولات",i:"📦"},{id:"orders",l:"سفارشات",i:"🛒"}].map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)}
+                className={`px-4 py-2.5 rounded-t-xl font-medium text-sm whitespace-nowrap transition ${tab===t.id?"bg-indigo-50 text-indigo-700 border-b-2 border-indigo-600":"text-slate-600 hover:bg-slate-50"}`}>
+                <span className="ml-1">{t.i}</span>{t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-[1400px] mx-auto p-4 pb-20">
+        {tab==="dashboard"&&<Dashboard data={data} setTab={setTab} setProducts={setProducts} showToast={showToast}/>}
+        {tab==="products"&&<Products products={data.products} setProducts={setProducts} suppliers={suppliers} showToast={showToast} setOrders={setOrders} orders={data.orders}/>}
+        {tab==="orders"&&<Orders orders={data.orders} setOrders={setOrders} products={data.products} showToast={showToast}/>}
+      </main>
+
+      {toast&&<div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-2xl text-white font-medium fade-in z-50 ${toast.type==="error"?"bg-red-600":"bg-emerald-600"}`}>{toast.msg}</div>}
+    </div>
+  );
+}
+
+function Dashboard({data,setTab,setProducts,showToast}) {
+  const [syncing,setSyncing]=useState(false);
+  const [syncProgress,setSyncProgress]=useState(0);
+  const [aliProducts,setAliProducts]=useState([]);
+  const [showList,setShowList]=useState(false);
+
+  const stats=useMemo(()=>{
+    const p=data.products,o=data.orders;
+    const delivered=o.filter(x=>x.status==="تحویل شد");
+    return {
+      total:p.length, available:p.filter(x=>x.availability==="موجود").length,
+      inquiry:p.filter(x=>x.availability==="استعلام").length, out:p.filter(x=>x.availability==="ناموجود").length,
+      newOrders:o.filter(x=>x.status==="جدید").length,
+      totalProfit:delivered.reduce((s,x)=>s+(Number(x.profit)||0),0),
+      totalRevenue:delivered.reduce((s,x)=>s+(Number(x.salePrice)*Number(x.qty)),0),
+      deliveredCount:delivered.length,
+    };
+  },[data]);
+
+  const handleSync=async()=>{
+    setSyncing(true); setSyncProgress(0);
+    try {
+      const list=await fetchAliProducts(n=>setSyncProgress(n));
+      setAliProducts(list); setShowList(true);
+      showToast(`${list.length} محصول دریافت شد`);
+    } catch(e) { showToast("خطا: "+e.message,"error"); }
+    finally { setSyncing(false); }
+  };
+
+  const handleImportAll=()=>{
+    const existing=new Set(data.products.map(p=>p.name_fa?.trim()));
+    const newProds=aliProducts.filter(ap=>!existing.has(ap.name.trim())).map(ap=>({
+      id:uid(), supplier:"علی ورساچ", brand:ap.brand, category:ap.categories[0]||"",
+      type:"", name_fa:ap.name, name_en:"", spec:"", availability:ap.availability,
+      buyPrice:ap.price, salePrice:0, note:`لینک: ${ap.link}`, image:ap.image, createdAt:Date.now()
+    }));
+    if(!newProds.length){showToast("همه محصولات قبلاً اضافه شدن","error");return;}
+    setProducts(prev=>[...newProds,...prev]);
+    showToast(`${newProds.length} محصول جدید اضافه شد`);
+  };
+
+  const handleUpdatePrices=()=>{
+    let updated=0;
+    setProducts(prev=>prev.map(p=>{
+      if(p.supplier!=="علی ورساچ")return p;
+      const match=aliProducts.find(ap=>ap.name.includes(p.name_fa?.slice(0,6))||p.name_fa?.includes(ap.name.slice(0,6)));
+      if(match){updated++;return{...p,availability:match.availability,buyPrice:match.price,image:match.image||p.image};}
+      return p;
+    }));
+    showToast(`${updated} محصول بروزرسانی شد`);
+  };
+
+  return (
+    <div className="space-y-5 fade-in">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[["کل محصولات","📦","from-blue-500 to-blue-600",fmt(stats.total)],["موجود","✅","from-emerald-500 to-emerald-600",fmt(stats.available)],["ناموجود","❌","from-red-500 to-red-600",fmt(stats.out)],["سفارشات جدید","🛒","from-purple-500 to-purple-600",fmt(stats.newOrders)],["درآمد کل","💰","from-pink-500 to-pink-600",fmt(stats.totalRevenue)+" ت"],["سود خالص","📈","from-indigo-500 to-indigo-600",fmt(stats.totalProfit)+" ت"],["تحویل شده","🎯","from-teal-500 to-teal-600",fmt(stats.deliveredCount)],["استعلامی","🔍","from-amber-500 to-amber-600",fmt(stats.inquiry)]].map(([l,i,c,v])=>(
+          <div key={l} className={`bg-gradient-to-br ${c} text-white rounded-2xl p-4 shadow-lg`}>
+            <div className="text-2xl mb-2">{i}</div>
+            <div className="text-xl font-bold mb-1">{v}</div>
+            <div className="text-xs opacity-90">{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Ali Versace Sync */}
+      <div className="bg-gradient-to-br from-purple-700 to-indigo-800 rounded-2xl p-5 text-white">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold">🛍️ همگام‌سازی با علی ورساچ</h2>
+            <p className="text-xs opacity-70 mt-1">دریافت قیمت، موجودی و عکس از سایت</p>
+          </div>
+          <button onClick={handleSync} disabled={syncing}
+            className={`px-5 py-2.5 rounded-xl font-bold text-sm ${syncing?"bg-white/20 cursor-not-allowed":"bg-white text-purple-800 hover:bg-purple-50"}`}>
+            {syncing?`⏳ ${syncProgress} محصول...`:"📡 دریافت محصولات"}
+          </button>
+        </div>
+        {aliProducts.length>0&&!syncing&&(
+          <div className="flex flex-wrap gap-2 mt-4">
+            <button onClick={()=>setShowList(v=>!v)} className="px-3 py-1.5 bg-white/20 rounded-lg text-sm hover:bg-white/30">{showList?"بستن لیست":"نمایش لیست"}</button>
+            <button onClick={handleImportAll} className="px-3 py-1.5 bg-indigo-500/50 rounded-lg text-sm hover:bg-indigo-500/70">➕ افزودن همه</button>
+            <button onClick={handleUpdatePrices} className="px-3 py-1.5 bg-emerald-600/70 rounded-lg text-sm hover:bg-emerald-600">🔄 بروزرسانی قیمت‌ها</button>
+          </div>
+        )}
+      </div>
+
+      {showList&&aliProducts.length>0&&(
+        <div className="bg-white rounded-2xl shadow-sm border border-purple-100">
+          <div className="p-4 border-b flex justify-between">
+            <h3 className="font-bold">محصولات علی ورساچ ({aliProducts.length})</h3>
+            <button onClick={()=>setShowList(false)} className="text-slate-400 text-xl">×</button>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 max-h-96 overflow-y-auto scrollbar-thin">
+            {aliProducts.map(ap=>(
+              <div key={ap.id} className="border rounded-xl p-3 hover:shadow-md">
+                {ap.image?<img src={ap.image} className="w-full h-24 object-contain mb-2"/>:<div className="w-full h-24 bg-slate-100 flex items-center justify-center text-2xl">📦</div>}
+                <a href={ap.link} target="_blank" className="font-medium text-xs hover:text-indigo-600 line-clamp-2 block">{ap.name}</a>
+                <div className="flex justify-between mt-1">
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${ap.inStock?"bg-green-100 text-green-700":"bg-red-100 text-red-700"}`}>{ap.availability}</span>
+                  <span className="text-xs font-bold text-indigo-700">{fmt(ap.price)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Suppliers */}
+      <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <h3 className="font-bold mb-4">🏭 وضعیت تامین‌کنندگان</h3>
+        {data.products.length===0?<p className="text-center text-slate-400 py-6">محصولی ثبت نشده</p>:
+        <div className="space-y-2">
+          {[...new Set(data.products.map(p=>p.supplier).filter(Boolean))].map(name=>{
+            const s=data.products.filter(p=>p.supplier===name);
+            const c=supplierColor(name);
+            return <div key={name} className="p-3 rounded-xl border" style={{borderColor:c.border,background:c.bg}}>
+              <div className="flex justify-between mb-2">
+                <span className="font-bold" style={{color:c.text}}>{name}</span>
+                <span className="text-sm" style={{color:c.text}}>{s.length} محصول</span>
+              </div>
+              <div className="flex gap-2 text-xs">
+                <span className="px-2 py-1 bg-white/60 rounded">✅ {s.filter(x=>x.availability==="موجود").length}</span>
+                <span className="px-2 py-1 bg-white/60 rounded">🔍 {s.filter(x=>x.availability==="استعلام").length}</span>
+                <span className="px-2 py-1 bg-white/60 rounded">❌ {s.filter(x=>x.availability==="ناموجود").length}</span>
+              </div>
+            </div>;
+          })}
+        </div>}
+      </div>
+    </div>
+  );
+}
+
+function Products({products,setProducts,suppliers,showToast,setOrders,orders}) {
+  const [search,setSearch]=useState("");
+  const [filterSup,setFilterSup]=useState("");
+  const [filterAvail,setFilterAvail]=useState("");
+  const [showForm,setShowForm]=useState(false);
+  const [editing,setEditing]=useState(null);
+
+  const filtered=useMemo(()=>{
+    const v=search.trim().toLowerCase();
+    return products.filter(p=>{
+      if(filterSup&&p.supplier!==filterSup)return false;
+      if(filterAvail&&p.availability!==filterAvail)return false;
+      if(!v)return true;
+      return `${p.name_fa} ${p.brand} ${p.supplier} ${p.spec}`.toLowerCase().includes(v);
+    });
+  },[products,search,filterSup,filterAvail]);
+
+  const handleDelete=id=>{if(!confirm("حذف شود؟"))return;setProducts(prev=>prev.filter(p=>p.id!==id));showToast("حذف شد");};
+  const handleDuplicate=p=>{setProducts(prev=>[{...p,id:uid(),name_fa:p.name_fa+" (کپی)",createdAt:Date.now()},...prev]);showToast("کپی شد");};
+  const handleQuickOrder=p=>{
+    const customerName=prompt("نام مشتری:");if(!customerName)return;
+    const qty=Number(prompt("تعداد:","1"))||1;
+    setOrders(prev=>[{id:uid(),productId:p.id,qty,customerName,phone:"",status:"جدید",createdAt:Date.now(),supplier:p.supplier,buyPrice:p.buyPrice,salePrice:p.salePrice,profit:(p.salePrice-p.buyPrice)*qty},...prev]);
+    showToast("سفارش ثبت شد");
+  };
+  const handleExport=()=>{
+    const ws=XLSX.utils.json_to_sheet(products);const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,"Products");XLSX.writeFile(wb,`products_${Date.now()}.xlsx`);
+    showToast("دانلود شد");
+  };
+  const handleImport=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try {
+        const wb=XLSX.read(ev.target.result,{type:"array"});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        const newProds=rows.map(r=>({id:uid(),supplier:r.supplier||r["تامین کننده"]||"",brand:r.brand||r["برند"]||"",category:r.category||"",type:r.type||"",name_fa:r.name_fa||r["نام"]||"",name_en:"",spec:r.spec||"",availability:r.availability||"استعلام",buyPrice:Number(r.buyPrice||r["قیمت خرید"]||0),salePrice:Number(r.salePrice||r["قیمت فروش"]||0),note:r.note||"",createdAt:Date.now()}));
+        setProducts(prev=>[...newProds,...prev]);showToast(`${newProds.length} محصول وارد شد`);
+      } catch{showToast("خطا در فایل","error");}
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  return (
+    <div className="space-y-4 fade-in">
+      <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="flex flex-wrap gap-2 mb-3">
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 جستجو..." className="flex-1 min-w-[180px] px-3 py-2 border rounded-xl text-sm"/>
+          <select value={filterSup} onChange={e=>setFilterSup(e.target.value)} className="px-3 py-2 border rounded-xl text-sm">
+            <option value="">همه تامین‌کنندگان</option>
+            {suppliers.map(s=><option key={s}>{s}</option>)}
+          </select>
+          <select value={filterAvail} onChange={e=>setFilterAvail(e.target.value)} className="px-3 py-2 border rounded-xl text-sm">
+            <option value="">همه وضعیت‌ها</option>
+            {AVAILABILITY.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button onClick={()=>{setEditing(null);setShowForm(true);}} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium">➕ محصول جدید</button>
+          <button onClick={handleExport} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium">📥 خروجی Excel</button>
+          <label className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium cursor-pointer">📤 ورود از Excel<input type="file" accept=".xlsx" onChange={handleImport} className="hidden"/></label>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 border-b">
+              <tr>{["عکس","تامین‌کننده","نام","وضعیت","قیمت خرید","قیمت فروش","سود","عملیات"].map(h=><th key={h} className="px-3 py-3 text-right font-semibold text-slate-600">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {filtered.length===0?<tr><td colSpan="8" className="text-center py-12 text-slate-400">محصولی یافت نشد</td></tr>:
+              filtered.map(p=>{
+                const sc=supplierColor(p.supplier);
+                const link=p.note?.match(/https:\/\/aliversache\.com\/[^\s]+/)?.[0];
+                return <tr key={p.id} className="border-b hover:bg-slate-50">
+                  <td className="px-3 py-2">{p.image?<img src={p.image} className="w-10 h-10 rounded object-cover"/>:<div className="w-10 h-10 bg-slate-100 rounded flex items-center justify-center">📦</div>}</td>
+                  <td className="px-3 py-2"><span className="px-2 py-1 rounded text-xs font-bold" style={{background:sc.bg,color:sc.text}}>{p.supplier}</span></td>
+                  <td className="px-3 py-2">
+                    <div className="font-medium text-sm">{p.name_fa}</div>
+                    {p.spec&&<div className="text-xs text-slate-400">{p.spec}</div>}
+                    {link&&<a href={link} target="_blank" className="text-xs text-indigo-500 hover:underline">🔗 سایت</a>}
+                  </td>
+                  <td className="px-3 py-2"><span className={`px-2 py-1 rounded text-xs border ${availColor(p.availability)}`}>{p.availability}</span></td>
+                  <td className="px-3 py-2 text-sm">{fmt(p.buyPrice)}</td>
+                  <td className="px-3 py-2 text-sm font-medium">{fmt(p.salePrice)}</td>
+                  <td className="px-3 py-2"><span className={`text-sm font-bold ${(p.salePrice-p.buyPrice)>=0?"text-emerald-600":"text-red-500"}`}>{fmt(p.salePrice-p.buyPrice)}</span></td>
+                  <td className="px-3 py-2">
+                    <div className="flex gap-1">
+                      <button onClick={()=>handleQuickOrder(p)} className="p-1.5 bg-purple-100 text-purple-700 rounded text-xs" title="ثبت سفارش">🛒</button>
+                      <button onClick={()=>{setEditing(p);setShowForm(true);}} className="p-1.5 bg-blue-100 text-blue-700 rounded text-xs" title="ویرایش">✏️</button>
+                      <button onClick={()=>handleDuplicate(p)} className="p-1.5 bg-amber-100 text-amber-700 rounded text-xs" title="کپی">📋</button>
+                      <button onClick={()=>handleDelete(p.id)} className="p-1.5 bg-red-100 text-red-700 rounded text-xs" title="حذف">🗑️</button>
+                    </div>
+                  </td>
+                </tr>;
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {showForm&&<ProductForm product={editing} suppliers={suppliers} onSave={p=>{
+        if(editing) setProducts(prev=>prev.map(x=>x.id===editing.id?p:x));
+        else setProducts(prev=>[p,...prev]);
+        showToast(editing?"ویرایش شد":"اضافه شد");
+        setShowForm(false);setEditing(null);
+      }} onClose={()=>{setShowForm(false);setEditing(null);}}/>}
+    </div>
+  );
+}
+
+function ProductForm({product,suppliers,onSave,onClose}) {
+  const [form,setForm]=useState(product||{id:uid(),supplier:"",brand:"",category:"",type:"",name_fa:"",name_en:"",spec:"",target:"",availability:"استعلام",buyPrice:0,salePrice:0,note:"",createdAt:Date.now()});
+  const update=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const profit=(form.salePrice||0)-(form.buyPrice||0);
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold">{product?"ویرایش محصول":"محصول جدید"}</h3>
+          <button onClick={onClose} className="text-2xl text-slate-400">×</button>
+        </div>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-xs font-medium mb-1 text-slate-600">تامین‌کننده</label>
+              <input list="sups" value={form.supplier} onChange={e=>update("supplier",e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm"/>
+              <datalist id="sups">{suppliers.map(s=><option key={s} value={s}/>)}</datalist>
+            </div>
+            <div><label className="block text-xs font-medium mb-1 text-slate-600">برند</label>
+              <input value={form.brand} onChange={e=>update("brand",e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm"/>
+            </div>
+          </div>
+          <div><label className="block text-xs font-medium mb-1 text-slate-600">نام محصول *</label>
+            <input value={form.name_fa} onChange={e=>update("name_fa",e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm" placeholder="مثلاً: کراتین کویین"/>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-xs font-medium mb-1 text-slate-600">دسته‌بندی</label>
+              <select value={form.category} onChange={e=>update("category",e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
+                <option value="">انتخاب...</option>{CATEGORIES.map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div><label className="block text-xs font-medium mb-1 text-slate-600">وضعیت موجودی</label>
+              <select value={form.availability} onChange={e=>update("availability",e.target.value)} className="w-full px-3 py-2 border rounded-lg text-sm">
+                {AVAILABILITY.map(a=><option key={a}>{a}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className="block text-xs font-medium mb-1 text-slate-600">قیمت خرید (تومان)</label>
+              <input type="number" value={form.buyPrice} onChange={e=>update("buyPrice",Number(e.target.value))} className="w-full px-3 py-2 border rounded-lg text-sm"/>
+            </div>
+            <div><label className="block text-xs font-medium mb-1 text-slate-600">قیمت فروش (تومان)</label>
+              <input type="number" value={form.salePrice} onChange={e=>update("salePrice",Number(e.target.value))} className="w-full px-3 py-2 border rounded-lg text-sm"/>
+            </div>
+          </div>
+          <div className={`px-3 py-2 rounded-lg text-sm font-bold ${profit>=0?"bg-emerald-50 text-emerald-700":"bg-red-50 text-red-700"}`}>
+            سود: {fmt(profit)} تومان
+          </div>
+          <div><label className="block text-xs font-medium mb-1 text-slate-600">مشخصات / یادداشت</label>
+            <textarea value={form.note} onChange={e=>update("note",e.target.value)} rows="2" className="w-full px-3 py-2 border rounded-lg text-sm resize-none"/>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-5">
+          <button onClick={()=>{if(!form.name_fa)return alert("نام الزامی است");onSave(form);}} className="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl font-bold">💾 ذخیره</button>
+          <button onClick={onClose} className="flex-1 bg-slate-200 text-slate-700 py-2.5 rounded-xl font-bold">انصراف</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Orders({orders,setOrders,products,showToast}) {
+  const [filterStatus,setFilterStatus]=useState("");
+  const [search,setSearch]=useState("");
+  const filtered=useMemo(()=>orders.filter(o=>{
+    if(filterStatus&&o.status!==filterStatus)return false;
+    if(search){const p=products.find(x=>x.id===o.productId);if(!(o.customerName+" "+(p?.name_fa||"")).toLowerCase().includes(search.toLowerCase()))return false;}
+    return true;
+  }).sort((a,b)=>b.createdAt-a.createdAt),[orders,filterStatus,search,products]);
+
+  return (
+    <div className="space-y-4 fade-in">
+      <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+        {ORDER_STATUS.map(s=>(
+          <button key={s} onClick={()=>setFilterStatus(filterStatus===s?"":s)}
+            className={`p-3 rounded-xl text-center transition bg-white shadow-sm ${filterStatus===s?"ring-2 ring-indigo-500":" "}`}>
+            <div className="text-xl font-bold">{orders.filter(o=>o.status===s).length}</div>
+            <div className="text-xs text-slate-500 mt-0.5">{s}</div>
+          </button>
+        ))}
+      </div>
+      <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 جستجو..." className="w-full px-3 py-2 border rounded-xl text-sm"/>
+      </div>
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 border-b">
+            <tr>{["تاریخ","مشتری","محصول","تعداد","سود","وضعیت"].map(h=><th key={h} className="px-3 py-3 text-right font-semibold text-slate-600">{h}</th>)}</tr>
+          </thead>
+          <tbody>
+            {filtered.length===0?<tr><td colSpan="6" className="text-center py-12 text-slate-400">سفارشی یافت نشد</td></tr>:
+            filtered.map(o=>{
+              const p=products.find(x=>x.id===o.productId);
+              return <tr key={o.id} className="border-b hover:bg-slate-50">
+                <td className="px-3 py-2 text-xs text-slate-500">{new Date(o.createdAt).toLocaleDateString("fa-IR")}</td>
+                <td className="px-3 py-2"><div className="font-medium">{o.customerName}</div><div className="text-xs text-slate-400">{o.phone}</div></td>
+                <td className="px-3 py-2 text-sm">{p?.name_fa||"—"}</td>
+                <td className="px-3 py-2">{fmt(o.qty)}</td>
+                <td className="px-3 py-2 text-emerald-600 font-bold">{fmt(o.profit)}</td>
+                <td className="px-3 py-2">
+                  <select value={o.status} onChange={e=>setOrders(prev=>prev.map(x=>x.id===o.id?{...x,status:e.target.value}:x))} className={`px-2 py-1 rounded text-xs ${statusColor(o.status)}`}>
+                    {ORDER_STATUS.map(s=><option key={s}>{s}</option>)}
+                  </select>
+                </td>
+              </tr>;
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
