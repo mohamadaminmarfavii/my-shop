@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#111831" />
+  <meta name="application-name" content="OMS Pro v8.7" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="OMS Pro v8.7" />
+  <title>OMS Pro v8.7 · حساب تأمین‌کنندگان و تسویه اسنپ‌پی</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --v87-bg: #0f1731;
+      --v87-bg2: #151d3f;
+      --v87-card: #ffffff;
+      --v87-soft: #f6f7fb;
+      --v87-line: #e6e9f1;
+      --v87-text: #182033;
+      --v87-muted: #687086;
+      --v87-primary: #6f4df5;
+      --v87-primary2: #8a65ff;
+      --v87-green: #0f9f6e;
+      --v87-red: #dc3f55;
+      --v87-orange: #d66a08;
+      --v87-blue: #2563eb;
+      --v87-shadow: 0 18px 60px rgba(10, 18, 48, .22);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; font-family: Vazirmatn, Tahoma, Arial, sans-serif; background: var(--v87-bg); color: var(--v87-text); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    #legacyHost { position: fixed; inset: 0; background: var(--v87-bg); }
+    #legacyFrame { width: 100%; height: 100%; border: 0; display: block; background: var(--v87-bg); }
+    #v87Loader {
+      position: fixed; inset: 0; z-index: 999999; display: grid; place-items: center;
+      background: radial-gradient(circle at 30% 20%, #24265f 0, #111831 48%, #0b1128 100%);
+      color: white; transition: opacity .25s ease;
+    }
+    #v87Loader.done { opacity: 0; pointer-events: none; }
+    .v87-loader-card { width: min(440px, calc(100% - 28px)); padding: 26px; border: 1px solid rgba(255,255,255,.15); border-radius: 24px; background: rgba(255,255,255,.08); backdrop-filter: blur(18px); box-shadow: var(--v87-shadow); text-align: center; }
+    .v87-gem { width: 62px; height: 62px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 20px; background: linear-gradient(135deg, #7c5cff, #a36cff); font-size: 30px; box-shadow: 0 10px 35px rgba(124,92,255,.45); }
+    .v87-loader-title { font-size: 20px; font-weight: 900; }
+    .v87-loader-sub { margin-top: 7px; color: #cbd2eb; font-size: 13px; line-height: 1.9; }
+    .v87-progress { height: 8px; margin-top: 18px; overflow: hidden; border-radius: 999px; background: rgba(255,255,255,.11); }
+    .v87-progress::after { content: ""; display: block; height: 100%; width: 42%; border-radius: inherit; background: linear-gradient(90deg,#7c5cff,#b279ff); animation: v87load 1.1s infinite ease-in-out; }
+    @keyframes v87load { from { transform: translateX(150%); } to { transform: translateX(-260%); } }
+
+    #v87Launcher {
+      position: fixed; left: 18px; bottom: 18px; z-index: 1000002;
+      display: inline-flex; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.22);
+      color: #fff; background: linear-gradient(135deg, #6f4df5, #8a65ff); border-radius: 17px;
+      padding: 11px 15px; font-weight: 900; box-shadow: 0 13px 38px rgba(63,42,184,.42);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    #v87Launcher:hover { transform: translateY(-2px); box-shadow: 0 16px 42px rgba(63,42,184,.5); }
+    #v87Launcher .count { display: none; min-width: 22px; height: 22px; padding: 0 6px; align-items: center; justify-content: center; background: #ef334f; border-radius: 999px; font-size: 11px; }
+    #v87Launcher .count.show { display: inline-flex; }
+
+    #v87Backdrop { position: fixed; inset: 0; z-index: 1000003; display: none; background: rgba(6, 10, 27, .72); backdrop-filter: blur(5px); }
+    #v87Backdrop.open { display: block; }
+    #v87Panel {
+      position: absolute; inset: 16px; display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid rgba(255,255,255,.16); border-radius: 25px; background: #f4f6fb; box-shadow: 0 30px 90px rgba(0,0,0,.45);
+      animation: v87in .2s ease-out;
+    }
+    @keyframes v87in { from { opacity: .4; transform: translateY(10px) scale(.99); } to { opacity: 1; transform: none; } }
+    .v87-topbar { display: flex; align-items: center; gap: 14px; padding: 14px 18px; color: #fff; background: linear-gradient(110deg, #101731, #1d2251 62%, #31206a); }
+    .v87-brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .v87-logo { width: 42px; height: 42px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 14px; background: linear-gradient(135deg,#7558ff,#ad78ff); font-size: 22px; box-shadow: 0 8px 25px rgba(122,91,255,.42); }
+    .v87-brand-title { font-size: 16px; font-weight: 900; white-space: nowrap; }
+    .v87-brand-sub { margin-top: 2px; color: #bcc4df; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .v87-top-actions { margin-right: auto; display: flex; gap: 8px; }
+    .v87-icon-btn { min-width: 38px; height: 38px; padding: 0 11px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #fff; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; background: rgba(255,255,255,.08); font-weight: 800; }
+    .v87-icon-btn:hover { background: rgba(255,255,255,.16); }
+    .v87-shell { min-height: 0; flex: 1; display: grid; grid-template-columns: 210px minmax(0, 1fr); }
+    .v87-sidebar { padding: 14px; overflow-y: auto; color: #dce1f3; background: #121a35; border-left: 1px solid #222c50; }
+    .v87-tab { width: 100%; margin-bottom: 7px; padding: 11px 12px; display: flex; align-items: center; gap: 9px; color: #c8cee3; border: 1px solid transparent; border-radius: 13px; background: transparent; text-align: right; font-weight: 800; }
+    .v87-tab:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .v87-tab.active { color: #fff; border-color: rgba(147,119,255,.42); background: linear-gradient(135deg, rgba(111,77,245,.48), rgba(138,101,255,.22)); }
+    .v87-side-note { margin-top: 18px; padding: 12px; border: 1px solid #2b365e; border-radius: 14px; background: #171f3e; color: #9ca7c8; font-size: 11px; line-height: 1.9; }
+    .v87-content { min-width: 0; overflow-y: auto; padding: 18px; }
+    .v87-view { display: none; }
+    .v87-view.active { display: block; }
+    .v87-page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    .v87-page-title { font-size: 22px; font-weight: 900; color: #172039; }
+    .v87-page-sub { margin-top: 4px; color: var(--v87-muted); font-size: 12px; line-height: 1.8; }
+    .v87-grid { display: grid; gap: 12px; }
+    .v87-grid.kpis { grid-template-columns: repeat(6, minmax(0,1fr)); }
+    .v87-grid.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .v87-grid.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .v87-card { border: 1px solid var(--v87-line); border-radius: 18px; background: #fff; box-shadow: 0 7px 25px rgba(21,34,70,.055); }
+    .v87-card-pad { padding: 15px; }
+    .v87-kpi { position: relative; overflow: hidden; min-height: 112px; padding: 15px; }
+    .v87-kpi::after { content: ""; position: absolute; left: -24px; bottom: -30px; width: 88px; height: 88px; border-radius: 50%; background: rgba(111,77,245,.07); }
+    .v87-kpi-label { color: #7a8296; font-size: 11px; font-weight: 700; }
+    .v87-kpi-value { margin-top: 10px; font-size: 19px; font-weight: 900; color: #172039; }
+    .v87-kpi-meta { margin-top: 8px; font-size: 10px; color: #8b92a4; }
+    .v87-kpi.green { border-color: #cceee3; background: linear-gradient(145deg,#fff,#f1fbf7); }
+    .v87-kpi.red { border-color: #f5d0d7; background: linear-gradient(145deg,#fff,#fff5f6); }
+    .v87-kpi.purple { border-color: #ded5ff; background: linear-gradient(145deg,#fff,#f7f4ff); }
+    .v87-kpi.orange { border-color: #f5dfc4; background: linear-gradient(145deg,#fff,#fff8f0); }
+    .v87-toolbar { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; padding: 12px; margin-bottom: 12px; }
+    .v87-field { min-width: 135px; flex: 1; }
+    .v87-field.small { flex: 0 1 160px; }
+    .v87-label { display: block; margin-bottom: 5px; color: #687086; font-size: 10px; font-weight: 800; }
+    .v87-input, .v87-select, .v87-textarea { width: 100%; padding: 10px 11px; color: #1d253a; border: 1px solid #dfe3ec; border-radius: 11px; outline: none; background: #fff; }
+    .v87-input:focus, .v87-select:focus, .v87-textarea:focus { border-color: #8566f8; box-shadow: 0 0 0 3px rgba(111,77,245,.10); }
+    .v87-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 39px; padding: 9px 13px; border: 1px solid #dfe3ec; border-radius: 11px; background: #fff; color: #343c50; font-weight: 800; }
+    .v87-btn:hover { background: #f6f7fa; }
+    .v87-btn.primary { color: #fff; border-color: #6f4df5; background: linear-gradient(135deg,#6f4df5,#8964ff); }
+    .v87-btn.green { color: #fff; border-color: #0f9f6e; background: #0f9f6e; }
+    .v87-btn.red { color: #fff; border-color: #dc3f55; background: #dc3f55; }
+    .v87-btn.dark { color: #fff; border-color: #253052; background: #253052; }
+    .v87-btn.tiny { min-height: 31px; padding: 6px 9px; border-radius: 9px; font-size: 10px; }
+    .v87-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid #dfe3ec; border-radius: 999px; background: #f8f9fb; color: #5c6479; font-size: 10px; font-weight: 800; white-space: nowrap; }
+    .v87-badge.green { color: #087652; border-color: #bde6d8; background: #ecfbf5; }
+    .v87-badge.red { color: #b32940; border-color: #f2c4cd; background: #fff0f3; }
+    .v87-badge.orange { color: #a4520b; border-color: #f2d3ad; background: #fff6eb; }
+    .v87-badge.purple { color: #5e3fd3; border-color: #d6ccff; background: #f4f1ff; }
+    .v87-badge.blue { color: #1f55bd; border-color: #c8dafd; background: #eff5ff; }
+    .v87-table-wrap { overflow-x: auto; }
+    .v87-table { width: 100%; min-width: 850px; border-collapse: collapse; }
+    .v87-table th, .v87-table td { padding: 10px 11px; border-bottom: 1px solid #edf0f5; text-align: right; vertical-align: middle; font-size: 11px; }
+    .v87-table th { position: sticky; top: 0; z-index: 1; color: #727a8f; background: #f8f9fc; font-weight: 900; }
+    .v87-table tr:hover td { background: #fbfbfe; }
+    .v87-order { margin-bottom: 11px; overflow: hidden; }
+    .v87-order-head { display: grid; grid-template-columns: minmax(170px,1.4fr) repeat(4,minmax(95px,.7fr)) auto; gap: 10px; align-items: center; padding: 13px 14px; }
+    .v87-order-title { font-weight: 900; color: #1a2339; }
+    .v87-order-sub { margin-top: 3px; color: #7c8498; font-size: 10px; }
+    .v87-order-stat span { display: block; color: #8a91a4; font-size: 9px; }
+    .v87-order-stat strong { display: block; margin-top: 4px; color: #232c43; font-size: 12px; }
+    .v87-order-body { display: none; padding: 0 14px 14px; border-top: 1px solid #edf0f5; }
+    .v87-order.open .v87-order-body { display: block; }
+    .v87-empty { padding: 38px 18px; text-align: center; color: #858da1; }
+    .v87-empty-icon { font-size: 36px; margin-bottom: 8px; }
+    .v87-section-title { margin-bottom: 10px; font-size: 15px; font-weight: 900; color: #202941; }
+    .v87-supplier-card { padding: 15px; }
+    .v87-supplier-name { font-size: 16px; font-weight: 900; color: #1c263f; }
+    .v87-supplier-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+    .v87-mini { padding: 10px; border: 1px solid #e8ebf2; border-radius: 12px; background: #fafbfc; }
+    .v87-mini span { display: block; color: #8a91a4; font-size: 9px; }
+    .v87-mini strong { display: block; margin-top: 5px; color: #252e46; font-size: 12px; }
+    .v87-alert { padding: 12px 13px; border: 1px solid #d7dffc; border-radius: 13px; background: #f1f5ff; color: #3e4d78; font-size: 11px; line-height: 1.9; }
+    .v87-alert.warn { border-color: #f0d3ab; background: #fff7ec; color: #895015; }
+    .v87-alert.danger { border-color: #f0c5ce; background: #fff1f3; color: #9a2e42; }
+    .v87-statusline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .v87-dot { width: 8px; height: 8px; border-radius: 50%; background: #e44b5f; box-shadow: 0 0 0 4px rgba(228,75,95,.12); }
+    .v87-dot.ok { background: #11aa78; box-shadow: 0 0 0 4px rgba(17,170,120,.12); }
+    .v87-check-list { max-height: 260px; overflow-y: auto; border: 1px solid #e5e8f0; border-radius: 12px; }
+    .v87-check-row { display: grid; grid-template-columns: 30px minmax(170px,1fr) 120px 120px; gap: 8px; align-items: center; padding: 10px; border-bottom: 1px solid #edf0f5; background: #fff; }
+    .v87-check-row:last-child { border-bottom: 0; }
+    .v87-check-row:hover { background: #fafbfe; }
+    .v87-check-row input[type=checkbox] { width: 17px; height: 17px; accent-color: #6f4df5; }
+    .v87-payment { display: grid; grid-template-columns: minmax(140px,1fr) repeat(3,minmax(100px,.6fr)) auto; gap: 9px; align-items: center; padding: 11px 13px; border-bottom: 1px solid #edf0f5; }
+    .v87-payment:last-child { border-bottom: 0; }
+    .v87-modal { position: fixed; inset: 0; z-index: 1000010; display: none; place-items: center; padding: 18px; background: rgba(8,12,30,.72); }
+    .v87-modal.open { display: grid; }
+    .v87-modal-card { width: min(560px,100%); max-height: 90vh; overflow-y: auto; padding: 18px; border-radius: 20px; background: #fff; box-shadow: var(--v87-shadow); }
+    .v87-modal-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+    .v87-modal-title { font-size: 17px; font-weight: 900; }
+    .v87-toast { position: fixed; right: 22px; bottom: 22px; z-index: 1000020; max-width: 360px; padding: 12px 15px; color: #fff; border-radius: 13px; background: #19223e; box-shadow: var(--v87-shadow); font-size: 12px; font-weight: 700; transform: translateY(20px); opacity: 0; pointer-events: none; transition: .2s ease; }
+    .v87-toast.show { transform: none; opacity: 1; }
+    .v87-toast.error { background: #b72f47; }
+    .v87-muted { color: #7b8397; }
+    .v87-ltr { direction: ltr; text-align: left; }
+    .v87-number { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .v87-hidden { display: none !important; }
+    @media (max-width: 1180px) {
+      .v87-grid.kpis { grid-template-columns: repeat(3,minmax(0,1fr)); }
+      .v87-order-head { grid-template-columns: minmax(180px,1.4fr) repeat(2,minmax(90px,.7fr)) auto; }
+      .v87-order-head .hide-md { display: none; }
+    }
+    @media (max-width: 820px) {
+      #v87Panel { inset: 5px; border-radius: 18px; }
+      .v87-topbar { padding: 10px 11px; }
+      .v87-brand-sub { display: none; }
+      .v87-top-actions .txt { display: none; }
+      .v87-shell { display: block; }
+      .v87-sidebar { display: flex; gap: 6px; overflow-x: auto; padding: 8px; border-left: 0; border-bottom: 1px solid #263052; }
+      .v87-tab { width: auto; flex: 0 0 auto; margin: 0; padding: 9px 11px; white-space: nowrap; }
+      .v87-side-note { display: none; }
+      .v87-content { height: calc(100% - 58px); padding: 11px; }
+      .v87-page-head { display: block; }
+      .v87-grid.kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .v87-grid.two, .v87-grid.three { grid-template-columns: 1fr; }
+      .v87-order-head { grid-template-columns: 1fr auto; }
+      .v87-order-head .v87-order-stat { display: none; }
+      .v87-supplier-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      #v87Launcher { left: 10px; bottom: 10px; padding: 10px 12px; }
+    }
+    @media (max-width: 480px) {
+      .v87-grid.kpis { grid-template-columns: 1fr; }
+      .v87-top-actions .refresh-label { display: none; }
+      .v87-brand-title { font-size: 14px; }
+      .v87-logo { width: 37px; height: 37px; }
+    }
+    @media print {
+      #legacyHost, #v87Launcher, .v87-topbar, .v87-sidebar, .v87-toolbar, .no-print { display: none !important; }
+      #v87Backdrop { position: static; display: block !important; background: #fff; }
+      #v87Panel { position: static; inset: auto; box-shadow: none; border: 0; background: #fff; }
+      .v87-shell { display: block; }
+      .v87-content { overflow: visible; padding: 0; }
+      .v87-card { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="legacyHost"><iframe id="legacyFrame" title="OMS Pro v8.6"></iframe></div>
+
+  <div id="v87Loader">
+    <div class="v87-loader-card">
+      <div class="v87-gem">💎</div>
+      <div class="v87-loader-title">OMS Pro v8.7</div>
+      <div class="v87-loader-sub" id="loaderText">در حال اجرای نسخه اصلی و آماده‌سازی حساب تأمین‌کنندگان…</div>
+      <div class="v87-progress"></div>
+    </div>
+  </div>
+
+  <button id="v87Launcher" type="button" title="حساب تأمین‌کنندگان و تسویه اسنپ‌پی">
+    <span>🧾</span><span>حساب تأمین‌کنندگان</span><span class="count" id="v87NeedCount">0</span>
+  </button>
+
+  <div id="v87Backdrop">
+    <section id="v87Panel" role="dialog" aria-modal="true" aria-label="حساب تأمین‌کنندگان و تسویه اسنپ‌پی">
+      <header class="v87-topbar">
+        <div class="v87-brand">
+          <div class="v87-logo">💎</div>
+          <div>
+            <div class="v87-brand-title">OMS Pro v8.7</div>
+            <div class="v87-brand-sub">تأمین‌کننده در سطح هر قلم · بدهی جداگانه · سود واقعی · تسویه اسنپ‌پی</div>
+          </div>
+        </div>
+        <div class="v87-top-actions">
+          <button class="v87-icon-btn" id="v87Refresh"><span>↻</span><span class="refresh-label">بروزرسانی</span></button>
+          <button class="v87-icon-btn" id="v87Print"><span>🖨️</span><span class="txt">چاپ</span></button>
+          <button class="v87-icon-btn" id="v87Close"><span>×</span></button>
+        </div>
+      </header>
+      <div class="v87-shell">
+        <aside class="v87-sidebar">
+          <button class="v87-tab active" data-view="dashboard">📊 نمای مالی</button>
+          <button class="v87-tab" data-view="orders">🛒 اقلام سفارش‌ها</button>
+          <button class="v87-tab" data-view="suppliers">👥 حساب تأمین‌کنندگان</button>
+          <button class="v87-tab" data-view="snapp">💳 تسویه اسنپ‌پی</button>
+          <button class="v87-tab" data-view="settings">⚙️ تنظیمات و پشتیبان</button>
+          <div class="v87-side-note">نسخهٔ ۸.۶ بدون حذف هیچ قابلیت اجرا می‌شود. اطلاعات جدید این نسخه در یک لایهٔ حسابداری جدا و امن ذخیره می‌شود.</div>
+        </aside>
+        <main class="v87-content">
+          <section class="v87-view active" id="view-dashboard"></section>
+          <section class="v87-view" id="view-orders"></section>
+          <section class="v87-view" id="view-suppliers"></section>
+          <section class="v87-view" id="view-snapp"></section>
+          <section class="v87-view" id="view-settings"></section>
+        </main>
+      </div>
+    </section>
+  </div>
+
+  <div class="v87-modal" id="v87Modal"><div class="v87-modal-card" id="v87ModalCard"></div></div>
+  <div class="v87-toast" id="v87Toast"></div>
+  <input type="file" id="v87ImportInput" accept="application/json,.json" class="v87-hidden" />
+
+  <script>
+  (() => {
+    'use strict';
+
+    const VERSION = '8.7.0';
+    const DB_NAME = 'oms_pro_mobile_db';
+    const DB_VERSION = 1;
+    const STORE = 'kv';
+    const MAIN_KEY = 'main';
+    const FALLBACK_KEY = 'oms_pro_v3';
+    const ACCOUNTING_KEY = 'oms_v87_supplier_accounting';
+    const LEGACY_FILES = [
+      './oms-pro-v8.6-payment-supplier-settlement-reports-1.html',
+      './oms-pro-v8.6-payment-supplier-settlement-reports.html',
+      'https://mohamadaminmarfavi.github.io/my-shop/oms-pro-v8.6-payment-supplier-settlement-reports-1.html'
+    ];
+    const DEFAULT_SUPPLIERS = ['علی ورساچ', 'وحید نظری'];
+    const SUPPLIER_ALIASES = {
+      'علی ورساچه': 'علی ورساچ',
+      'علی‌ورساچ': 'علی ورساچ',
+      'علی ورساچ': 'علی ورساچ',
+      'ali versace': 'علی ورساچ',
+      'وحید': 'وحید نظری',
+      'وحید نظری': 'وحید نظری'
+    };
+
+    const $ = (s, root = document) => root.querySelector(s);
+    const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
+    const num = v => Number(v) || 0;
+    const fmt = v => (Number(v) || 0).toLocaleString('fa-IR');
+    const money = v => `${fmt(Math.round(num(v)))} ت`;
+    const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const faToEn = s => String(s ?? '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    const normDate = s => faToEn(s).replace(/[-.]/g, '/').replace(/\s/g, '').split('/').map((p,i)=> i ? p.padStart(2,'0') : p).join('/');
+    const todayFa = () => new Date().toLocaleDateString('fa-IR-u-ca-persian', {year:'numeric',month:'2-digit',day:'2-digit'}).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+    const canonicalSupplier = value => {
+      const raw = String(value || '').trim();
+      if (!raw) return 'نامشخص';
+      const low = raw.toLowerCase();
+      return SUPPLIER_ALIASES[raw] || SUPPLIER_ALIASES[low] || raw;
+    };
+
+    const app = {
+      main: { orders: [], products: [] },
+      accounting: null,
+      activeView: 'dashboard',
+      filters: { search: '', from: '', to: '', channel: '', supplier: '' },
+      expandedOrders: new Set(),
+      snappSelected: new Set(),
+      dbOk: false,
+      legacyLoaded: false
+    };
+
+    function defaultAccounting() {
+      return {
+        version: VERSION,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        suppliers: [...DEFAULT_SUPPLIERS],
+        allocations: {},
+        supplierPayments: [],
+        snappSettlements: [],
+        settings: { snappCommissionRate: 10, snappVatRate: 10 }
+      };
+    }
+
+    function normalizeAccounting(raw) {
+      const base = defaultAccounting();
+      if (!raw || typeof raw !== 'object') return base;
+      return {
+        ...base,
+        ...raw,
+        version: VERSION,
+        suppliers: Array.from(new Set([...DEFAULT_SUPPLIERS, ...(Array.isArray(raw.suppliers) ? raw.suppliers : [])].map(canonicalSupplier).filter(Boolean))),
+        allocations: raw.allocations && typeof raw.allocations === 'object' ? raw.allocations : {},
+        supplierPayments: Array.isArray(raw.supplierPayments) ? raw.supplierPayments : [],
+        snappSettlements: Array.isArray(raw.snappSettlements) ? raw.snappSettlements : [],
+        settings: { ...base.settings, ...(raw.settings || {}) }
+      };
+    }
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+          if (!db.objectStoreNames.contains('backups')) db.createObjectStore('backups', { keyPath: 'id' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error('خطا در بازکردن پایگاه داده'));
+      });
+    }
+
+    async function idbGet(key) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readonly');
+        const req = tx.objectStore(STORE).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => db.close();
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+    }
+
+    async function idbPut(key, value) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        const req = tx.objectStore(STORE).put(value, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+        tx.oncomplete = () => db.close();
+        tx.onerror = () => { db.close(); reject(tx.error); };
+      });
+    }
+
+    async function loadMain() {
+      let data = null;
+      try {
+        data = await idbGet(MAIN_KEY);
+        app.dbOk = true;
+      } catch (e) {
+        console.warn('OMS v8.7 IndexedDB read failed', e);
+      }
+      if (!data) {
+        try { data = JSON.parse(localStorage.getItem(FALLBACK_KEY) || 'null'); } catch {}
+      }
+      app.main = data && typeof data === 'object' ? data : { orders: [], products: [] };
+      if (!Array.isArray(app.main.orders)) app.main.orders = [];
+      if (!Array.isArray(app.main.products)) app.main.products = [];
+    }
+
+    async function loadAccounting() {
+      let raw = null;
+      try { raw = await idbGet(ACCOUNTING_KEY); } catch {}
+      if (!raw) {
+        try { raw = JSON.parse(localStorage.getItem(ACCOUNTING_KEY) || 'null'); } catch {}
+      }
+      app.accounting = normalizeAccounting(raw);
+      discoverSuppliers();
+    }
+
+    async function saveAccounting(silent = false) {
+      app.accounting.updatedAt = Date.now();
+      try {
+        await idbPut(ACCOUNTING_KEY, app.accounting);
+        localStorage.setItem(ACCOUNTING_KEY, JSON.stringify(app.accounting));
+        if (!silent) toast('اطلاعات حسابداری ذخیره شد ✅');
+      } catch (e) {
+        try {
+          localStorage.setItem(ACCOUNTING_KEY, JSON.stringify(app.accounting));
+          if (!silent) toast('اطلاعات در حافظه مرورگر ذخیره شد');
+        } catch {
+          toast('ذخیره اطلاعات انجام نشد', true);
+        }
+      }
+    }
+
+    function discoverSuppliers() {
+      const names = [...DEFAULT_SUPPLIERS];
+      for (const p of app.main.products) if (p && p.supplier) names.push(canonicalSupplier(p.supplier));
+      for (const a of Object.values(app.accounting.allocations || {})) if (a && a.supplier) names.push(canonicalSupplier(a.supplier));
+      app.accounting.suppliers = Array.from(new Set([...(app.accounting.suppliers || []), ...names].filter(Boolean)));
+    }
+
+    function productMap() {
+      return new Map(app.main.products.map(p => [String(p.id), p]));
+    }
+
+    function orderDateFa(order) {
+      return normDate(order.orderDateFa || new Date(order.orderDate || order.createdAt || Date.now()).toLocaleDateString('fa-IR-u-ca-persian'));
+    }
+
+    function itemKey(order, item, index) {
+      return `${order.id || 'order'}::${item.id || item.productId || index}`;
+    }
+
+    function itemName(item, products) {
+      const p = products.get(String(item.productId));
+      return p?.name_fa || p?.name || item.name || item.productName || 'محصول بدون نام';
+    }
+
+    function inferredSupplier(order, item, products, index = 0) {
+      const key = itemKey(order, item, index);
+      const override = app.accounting.allocations[key];
+      if (override?.supplier) return canonicalSupplier(override.supplier);
+      const p = products.get(String(item.productId));
+      return canonicalSupplier(item.supplier || p?.supplier || order.supplier || 'نامشخص');
+    }
+
+    function itemRecord(order, item, index, products) {
+      const key = itemKey(order, item, index);
+      const allocation = app.accounting.allocations[key] || {};
+      const qty = Math.max(0, num(item.qty || item.quantity || 1));
+      const buyPrice = Math.max(0, num(item.buyPrice));
+      const salePrice = Math.max(0, num(item.salePrice));
+      const cost = qty * buyPrice;
+      const paid = Math.max(0, Math.min(cost, num(allocation.paidAmount)));
+      const supplier = inferredSupplier(order, item, products, index);
+      return {
+        key, order, item, index, allocation, supplier,
+        name: itemName(item, products), qty, buyPrice, salePrice,
+        cost, revenue: qty * salePrice, paid, debt: Math.max(0, cost - paid),
+        status: paid >= cost && cost > 0 ? 'تسویه شده' : paid > 0 ? 'بخشی' : 'تسویه نشده'
+      };
+    }
+
+    function allItemRecords(orders = app.main.orders) {
+      const products = productMap();
+      const out = [];
+      for (const order of orders) (order.items || []).forEach((item, index) => out.push(itemRecord(order, item, index, products)));
+      return out;
+    }
+
+    function filterOrders() {
+      const f = app.filters;
+      const q = String(f.search || '').trim().toLowerCase();
+      const from = normDate(f.from);
+      const to = normDate(f.to);
+      const products = productMap();
+      return app.main.orders.filter(order => {
+        const date = orderDateFa(order);
+        if (from && date < from) return false;
+        if (to && date > to) return false;
+        if (f.channel && (order.orderChannel || '') !== f.channel) return false;
+        const records = (order.items || []).map((it,i)=>itemRecord(order,it,i,products));
+        if (f.supplier && !records.some(r => r.supplier === f.supplier)) return false;
+        if (q) {
+          const hay = [order.customerName, order.phone, order.customerCode, order.note, order.orderChannel, ...records.map(r=>r.name+' '+r.supplier)].join(' ').toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      }).sort((a,b)=>num(b.createdAt)-num(a.createdAt));
+    }
+
+    function orderSupplierSummary(order) {
+      const products = productMap();
+      const names = Array.from(new Set((order.items || []).map((it,i)=>itemRecord(order,it,i,products).supplier).filter(Boolean)));
+      if (!names.length) return 'نامشخص';
+      if (names.length === 1) return names[0];
+      return `ترکیبی (${names.join(' + ')})`;
+    }
+
+    function expectedSnappNet(order) {
+      const revenue = num(order.revenue);
+      const fee = order.snappFee != null ? num(order.snappFee) : Math.round(revenue * .10) + Math.round(Math.round(revenue * .10) * .10);
+      return Math.max(0, revenue - fee);
+    }
+
+    function settlementReceivedForOrders(orderIds) {
+      const set = new Set(orderIds.map(String));
+      let total = 0;
+      for (const s of app.accounting.snappSettlements) {
+        const ids = Array.isArray(s.orderIds) ? s.orderIds.map(String) : [];
+        if (!ids.length) continue;
+        const matching = ids.filter(id => set.has(id));
+        if (!matching.length) continue;
+        const selectedExpected = ids.reduce((sum,id)=> {
+          const o = app.main.orders.find(x=>String(x.id)===id);
+          return sum + (o ? expectedSnappNet(o) : 0);
+        },0);
+        const matchingExpected = matching.reduce((sum,id)=> {
+          const o = app.main.orders.find(x=>String(x.id)===id);
+          return sum + (o ? expectedSnappNet(o) : 0);
+        },0);
+        total += selectedExpected > 0 ? num(s.amount) * (matchingExpected / selectedExpected) : num(s.amount) * (matching.length / ids.length);
+      }
+      return total;
+    }
+
+    function reportData(orders = filterOrders()) {
+      const items = allItemRecords(orders);
+      const revenue = orders.reduce((s,o)=>s+num(o.revenue),0);
+      const cost = items.reduce((s,r)=>s+r.cost,0);
+      const paid = items.reduce((s,r)=>s+r.paid,0);
+      const debt = Math.max(0, cost-paid);
+      const snappOrders = orders.filter(o => (o.orderChannel || '') === 'اسنپ‌پی');
+      const snappFees = snappOrders.reduce((s,o)=>s+num(o.snappFee),0);
+      const profit = revenue - cost - snappFees;
+      const snappExpected = snappOrders.reduce((s,o)=>s+expectedSnappNet(o),0);
+      const snappReceived = settlementReceivedForOrders(snappOrders.map(o=>o.id));
+      const availableCash = snappReceived - debt;
+      return { orders, items, revenue, cost, paid, debt, profit, snappOrders, snappFees, snappExpected, snappReceived, availableCash };
+    }
+
+    function supplierStats(orders = filterOrders()) {
+      const map = new Map();
+      for (const rec of allItemRecords(orders)) {
+        const name = rec.supplier;
+        if (!map.has(name)) map.set(name, { name, cost:0, paid:0, debt:0, items:0, orderIds:new Set() });
+        const x = map.get(name);
+        x.cost += rec.cost; x.paid += rec.paid; x.debt += rec.debt; x.items += rec.qty; x.orderIds.add(String(rec.order.id));
+      }
+      return Array.from(map.values()).map(x=>({...x,orders:x.orderIds.size})).sort((a,b)=>b.debt-a.debt || b.cost-a.cost);
+    }
+
+    function badge(text, kind='') { return `<span class="v87-badge ${kind}">${esc(text)}</span>`; }
+
+    function filterToolbar() {
+      const channels = Array.from(new Set(app.main.orders.map(o=>o.orderChannel).filter(Boolean)));
+      const suppliers = app.accounting.suppliers;
+      return `
+        <div class="v87-card v87-toolbar no-print">
+          <div class="v87-field"><label class="v87-label">جستجو</label><input class="v87-input" id="filterSearch" value="${esc(app.filters.search)}" placeholder="نام مشتری، محصول، کد سفارش…"></div>
+          <div class="v87-field small"><label class="v87-label">از تاریخ شمسی</label><input class="v87-input v87-ltr" id="filterFrom" value="${esc(app.filters.from)}" placeholder="1405/05/01"></div>
+          <div class="v87-field small"><label class="v87-label">تا تاریخ شمسی</label><input class="v87-input v87-ltr" id="filterTo" value="${esc(app.filters.to)}" placeholder="1405/05/31"></div>
+          <div class="v87-field small"><label class="v87-label">منبع پرداخت</label><select class="v87-select" id="filterChannel"><option value="">همه</option>${channels.map(x=>`<option ${app.filters.channel===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+          <div class="v87-field small"><label class="v87-label">تأمین‌کننده</label><select class="v87-select" id="filterSupplier"><option value="">همه</option>${suppliers.map(x=>`<option ${app.filters.supplier===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+          <button class="v87-btn primary" id="applyFilters">اعمال</button>
+          <button class="v87-btn" id="clearFilters">پاک‌کردن</button>
+        </div>`;
+    }
+
+    function bindFilters(root) {
+      $('#applyFilters', root)?.addEventListener('click', () => {
+        app.filters.search = $('#filterSearch',root)?.value || '';
+        app.filters.from = $('#filterFrom',root)?.value || '';
+        app.filters.to = $('#filterTo',root)?.value || '';
+        app.filters.channel = $('#filterChannel',root)?.value || '';
+        app.filters.supplier = $('#filterSupplier',root)?.value || '';
+        renderActive();
+      });
+      $('#clearFilters', root)?.addEventListener('click', () => { app.filters={search:'',from:'',to:'',channel:'',supplier:''}; renderActive(); });
+      $('#filterSearch', root)?.addEventListener('keydown', e => { if (e.key === 'Enter') $('#applyFilters',root)?.click(); });
+    }
+
+    function renderDashboard() {
+      const root = $('#view-dashboard');
+      const d = reportData();
+      const suppliers = supplierStats();
+      const needs = d.items.filter(r=>r.supplier==='نامشخص').length;
+      root.innerHTML = `
+        <div class="v87-page-head"><div><div class="v87-page-title">نمای مالی واقعی</div><div class="v87-page-sub">هزینه هر قلم به تأمین‌کننده خودش وصل می‌شود؛ بنابراین سفارش ترکیبی، بدهی‌ها و سود واقعی جدا محاسبه می‌شوند.</div></div><button class="v87-btn dark no-print" id="exportReport">⬇ خروجی CSV</button></div>
+        ${filterToolbar()}
+        <div class="v87-grid kpis">
+          <div class="v87-card v87-kpi purple"><div class="v87-kpi-label">درآمد سفارش‌ها</div><div class="v87-kpi-value">${money(d.revenue)}</div><div class="v87-kpi-meta">${fmt(d.orders.length)} سفارش در بازه</div></div>
+          <div class="v87-card v87-kpi orange"><div class="v87-kpi-label">هزینه خرید واقعی</div><div class="v87-kpi-value">${money(d.cost)}</div><div class="v87-kpi-meta">جمع قیمت خرید اقلام</div></div>
+          <div class="v87-card v87-kpi green"><div class="v87-kpi-label">سود حسابداری</div><div class="v87-kpi-value">${money(d.profit)}</div><div class="v87-kpi-meta">پس از هزینه خرید و کارمزد اسنپ‌پی</div></div>
+          <div class="v87-card v87-kpi red"><div class="v87-kpi-label">بدهی تأمین‌کنندگان</div><div class="v87-kpi-value">${money(d.debt)}</div><div class="v87-kpi-meta">پرداخت‌شده: ${money(d.paid)}</div></div>
+          <div class="v87-card v87-kpi"><div class="v87-kpi-label">واریزی ثبت‌شده اسنپ‌پی</div><div class="v87-kpi-value">${money(d.snappReceived)}</div><div class="v87-kpi-meta">مانده نزد اسنپ‌پی: ${money(Math.max(0,d.snappExpected-d.snappReceived))}</div></div>
+          <div class="v87-card v87-kpi ${d.availableCash>=0?'green':'red'}"><div class="v87-kpi-label">وجه قابل برداشت فعلی</div><div class="v87-kpi-value">${money(d.availableCash)}</div><div class="v87-kpi-meta">واریزی اسنپ‌پی منهای بدهی باز تأمین‌کنندگان</div></div>
+        </div>
+        <div class="v87-grid two" style="margin-top:12px">
+          <div class="v87-card v87-card-pad">
+            <div class="v87-section-title">تفکیک بدهی تأمین‌کنندگان</div>
+            ${suppliers.length ? `<div class="v87-table-wrap"><table class="v87-table" style="min-width:600px"><thead><tr><th>تأمین‌کننده</th><th>خرید</th><th>پرداخت</th><th>مانده بدهی</th><th>سفارش</th></tr></thead><tbody>${suppliers.map(s=>`<tr><td><strong>${esc(s.name)}</strong></td><td>${money(s.cost)}</td><td>${money(s.paid)}</td><td>${badge(money(s.debt),s.debt?'red':'green')}</td><td>${fmt(s.orders)}</td></tr>`).join('')}</tbody></table></div>` : `<div class="v87-empty"><div class="v87-empty-icon">📭</div>هنوز سفارشی برای محاسبه وجود ندارد.</div>`}
+          </div>
+          <div class="v87-card v87-card-pad">
+            <div class="v87-section-title">وضعیت اسنپ‌پی</div>
+            <div class="v87-supplier-metrics">
+              <div class="v87-mini"><span>فروش اسنپ‌پی</span><strong>${money(d.snappOrders.reduce((s,o)=>s+num(o.revenue),0))}</strong></div>
+              <div class="v87-mini"><span>کارمزد و مالیات</span><strong>${money(d.snappFees)}</strong></div>
+              <div class="v87-mini"><span>خالص مورد انتظار</span><strong>${money(d.snappExpected)}</strong></div>
+              <div class="v87-mini"><span>دریافت‌شده</span><strong>${money(d.snappReceived)}</strong></div>
+            </div>
+            <div class="v87-alert ${needs?'warn':''}" style="margin-top:12px">${needs ? `⚠️ ${fmt(needs)} قلم هنوز تأمین‌کننده مشخص ندارد. در تب «اقلام سفارش‌ها» آن‌ها را تعیین کن.` : '✅ تأمین‌کننده همه اقلام این بازه مشخص است.'}</div>
+          </div>
+        </div>`;
+      bindFilters(root);
+      $('#exportReport',root)?.addEventListener('click', exportCsv);
+    }
+
+    function orderCard(order) {
+      const products = productMap();
+      const records = (order.items || []).map((it,i)=>itemRecord(order,it,i,products));
+      const cost = records.reduce((s,r)=>s+r.cost,0);
+      const paid = records.reduce((s,r)=>s+r.paid,0);
+      const debt = Math.max(0,cost-paid);
+      const supplier = orderSupplierSummary(order);
+      const isMixed = supplier.startsWith('ترکیبی');
+      const isOpen = app.expandedOrders.has(String(order.id));
+      const options = app.accounting.suppliers.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+      return `<article class="v87-card v87-order ${isOpen?'open':''}" data-order="${esc(order.id)}">
+        <div class="v87-order-head">
+          <div><div class="v87-order-title">${esc(order.customerName || 'بدون نام')} ${badge(order.customerCode || String(order.id).slice(-6),'blue')}</div><div class="v87-order-sub">${esc(orderDateFa(order))} · ${esc(order.phone || 'بدون شماره')} · ${esc(order.orderChannel || 'منبع نامشخص')}</div></div>
+          <div class="v87-order-stat"><span>درآمد</span><strong>${money(order.revenue)}</strong></div>
+          <div class="v87-order-stat"><span>هزینه خرید</span><strong>${money(cost)}</strong></div>
+          <div class="v87-order-stat hide-md"><span>پرداخت تأمین‌کننده</span><strong>${money(paid)}</strong></div>
+          <div class="v87-order-stat hide-md"><span>مانده بدهی</span><strong>${money(debt)}</strong></div>
+          <div class="v87-statusline">${badge(supplier,isMixed?'purple':supplier==='نامشخص'?'orange':'green')}<button class="v87-btn tiny orderToggle">${isOpen?'بستن':'جزئیات'}</button></div>
+        </div>
+        <div class="v87-order-body">
+          <div class="v87-table-wrap" style="margin-top:12px"><table class="v87-table"><thead><tr><th>محصول</th><th>تعداد</th><th>قیمت خرید</th><th>بدهی قلم</th><th>تأمین‌کننده واقعی</th><th>پرداخت‌شده</th><th>وضعیت</th></tr></thead><tbody>
+            ${records.map(r=>`<tr data-item-key="${esc(r.key)}"><td><strong>${esc(r.name)}</strong><div class="v87-muted">فروش واحد: ${money(r.salePrice)}</div></td><td>${fmt(r.qty)}</td><td>${money(r.buyPrice)}</td><td>${money(r.cost)}</td><td><select class="v87-select itemSupplier" style="min-width:150px"><option value="نامشخص">نامشخص</option>${options}</select></td><td><input class="v87-input v87-ltr itemPaid" type="number" min="0" max="${r.cost}" value="${r.paid}" style="min-width:120px"></td><td>${badge(r.status,r.status==='تسویه شده'?'green':r.status==='بخشی'?'orange':'red')}</td></tr>`).join('')}
+          </tbody></table></div>
+          <div class="v87-statusline no-print" style="margin-top:12px;justify-content:flex-end"><button class="v87-btn green settleOrder">تسویه کامل اقلام این سفارش</button><button class="v87-btn primary saveOrderAllocations">ذخیره تغییرات</button></div>
+        </div>
+      </article>`;
+    }
+
+    function renderOrders() {
+      const root = $('#view-orders');
+      const orders = filterOrders();
+      root.innerHTML = `
+        <div class="v87-page-head"><div><div class="v87-page-title">تأمین‌کننده در سطح هر قلم</div><div class="v87-page-sub">تأمین‌کننده پیش‌فرض از خود محصول خوانده می‌شود. فقط وقتی خرید واقعی فرق دارد، همان قلم را تغییر بده.</div></div></div>
+        ${filterToolbar()}
+        <div class="v87-alert" style="margin-bottom:12px">در سفارش چندقلمی، هر محصول مستقل است. اگر دو قلم از علی ورساچ و یک قلم از وحید نظری باشد، سفارش خودکار با برچسب «ترکیبی» نمایش داده می‌شود.</div>
+        <div id="ordersList">${orders.length ? orders.map(orderCard).join('') : `<div class="v87-card v87-empty"><div class="v87-empty-icon">🛒</div>سفارشی مطابق فیلتر پیدا نشد.</div>`}</div>`;
+      bindFilters(root);
+      bindOrderCards(root);
+    }
+
+    function bindOrderCards(root) {
+      $$('.v87-order',root).forEach(card => {
+        const id = card.dataset.order;
+        const order = app.main.orders.find(o=>String(o.id)===String(id));
+        if (!order) return;
+        const products = productMap();
+        const records = (order.items || []).map((it,i)=>itemRecord(order,it,i,products));
+        $$('tr[data-item-key]',card).forEach(tr => {
+          const rec = records.find(r=>r.key===tr.dataset.itemKey);
+          const select = $('.itemSupplier',tr);
+          if (select && rec) select.value = rec.supplier;
+        });
+        $('.orderToggle',card)?.addEventListener('click', () => {
+          if (app.expandedOrders.has(String(id))) app.expandedOrders.delete(String(id)); else app.expandedOrders.add(String(id));
+          renderOrders();
+          setTimeout(()=>document.querySelector(`[data-order="${CSS.escape(String(id))}"]`)?.scrollIntoView({block:'center'}),20);
+        });
+        $('.saveOrderAllocations',card)?.addEventListener('click', async () => {
+          $$('tr[data-item-key]',card).forEach(tr => {
+            const key = tr.dataset.itemKey;
+            const supplier = canonicalSupplier($('.itemSupplier',tr)?.value || 'نامشخص');
+            const rec = records.find(r=>r.key===key);
+            const paid = Math.max(0, Math.min(rec?.cost || 0, num($('.itemPaid',tr)?.value)));
+            app.accounting.allocations[key] = { ...(app.accounting.allocations[key] || {}), supplier, paidAmount: paid, updatedAt: Date.now() };
+            if (!app.accounting.suppliers.includes(supplier) && supplier !== 'نامشخص') app.accounting.suppliers.push(supplier);
+          });
+          await saveAccounting();
+          renderOrders(); updateNeedCount();
+        });
+        $('.settleOrder',card)?.addEventListener('click', async () => {
+          records.forEach(rec => {
+            app.accounting.allocations[rec.key] = { ...(app.accounting.allocations[rec.key] || {}), supplier: rec.supplier, paidAmount: rec.cost, updatedAt: Date.now() };
+          });
+          await saveAccounting(); renderOrders(); updateNeedCount();
+        });
+      });
+    }
+
+    function renderSuppliers() {
+      const root = $('#view-suppliers');
+      const stats = supplierStats();
+      const items = allItemRecords(filterOrders()).filter(r=>r.debt>0);
+      root.innerHTML = `
+        <div class="v87-page-head"><div><div class="v87-page-title">حساب تأمین‌کنندگان</div><div class="v87-page-sub">خرید، پرداخت و ماندهٔ علی ورساچ و وحید نظری کاملاً جدا محاسبه می‌شود.</div></div><button class="v87-btn primary no-print" id="newSupplierPayment">+ ثبت پرداخت به تأمین‌کننده</button></div>
+        ${filterToolbar()}
+        <div class="v87-grid ${stats.length>2?'three':'two'}">
+          ${stats.map(s=>`<div class="v87-card v87-supplier-card"><div class="v87-statusline"><div class="v87-supplier-name">${esc(s.name)}</div>${badge(s.debt?'بدهکار':'تسویه',''+(s.debt?'red':'green'))}</div><div class="v87-supplier-metrics"><div class="v87-mini"><span>کل خرید</span><strong>${money(s.cost)}</strong></div><div class="v87-mini"><span>پرداخت‌شده</span><strong>${money(s.paid)}</strong></div><div class="v87-mini"><span>مانده بدهی</span><strong>${money(s.debt)}</strong></div><div class="v87-mini"><span>تعداد سفارش</span><strong>${fmt(s.orders)}</strong></div></div><button class="v87-btn tiny primary paySupplier" data-supplier="${esc(s.name)}" style="margin-top:12px">ثبت پرداخت برای ${esc(s.name)}</button></div>`).join('') || `<div class="v87-card v87-empty"><div class="v87-empty-icon">👥</div>هنوز حسابی ایجاد نشده است.</div>`}
+        </div>
+        <div class="v87-card v87-card-pad" style="margin-top:12px"><div class="v87-section-title">اقلام تسویه‌نشده</div>${items.length?`<div class="v87-table-wrap"><table class="v87-table"><thead><tr><th>تأمین‌کننده</th><th>محصول</th><th>مشتری / سفارش</th><th>تاریخ</th><th>هزینه خرید</th><th>پرداخت</th><th>مانده</th></tr></thead><tbody>${items.map(r=>`<tr><td>${badge(r.supplier,r.supplier==='نامشخص'?'orange':'purple')}</td><td><strong>${esc(r.name)}</strong> × ${fmt(r.qty)}</td><td>${esc(r.order.customerName||'—')}<div class="v87-muted">${esc(r.order.customerCode||r.order.id)}</div></td><td>${esc(orderDateFa(r.order))}</td><td>${money(r.cost)}</td><td>${money(r.paid)}</td><td>${badge(money(r.debt),'red')}</td></tr>`).join('')}</tbody></table></div>`:`<div class="v87-empty"><div class="v87-empty-icon">✅</div>همه اقلام این بازه تسویه شده‌اند.</div>`}</div>
+        <div class="v87-card v87-card-pad" style="margin-top:12px"><div class="v87-section-title">تاریخچه پرداخت‌ها</div>${renderPaymentHistory()}</div>`;
+      bindFilters(root);
+      $('#newSupplierPayment',root)?.addEventListener('click',()=>openSupplierPayment());
+      $$('.paySupplier',root).forEach(b=>b.addEventListener('click',()=>openSupplierPayment(b.dataset.supplier)));
+      $$('.cancelPayment',root).forEach(b=>b.addEventListener('click',()=>cancelSupplierPayment(b.dataset.id)));
+    }
+
+    function renderPaymentHistory() {
+      const rows = [...app.accounting.supplierPayments].sort((a,b)=>num(b.createdAt)-num(a.createdAt));
+      if (!rows.length) return `<div class="v87-empty">پرداختی ثبت نشده است.</div>`;
+      return rows.map(p=>`<div class="v87-payment"><div><strong>${esc(p.supplier)}</strong><div class="v87-muted">${esc(p.note||'بدون توضیح')}</div></div><div><span class="v87-muted">تاریخ</span><br>${esc(p.dateFa||'—')}</div><div><span class="v87-muted">مبلغ</span><br><strong>${money(p.amount)}</strong></div><div><span class="v87-muted">تخصیص‌یافته</span><br>${money((p.allocations||[]).reduce((s,x)=>s+num(x.amount),0))}</div><button class="v87-btn tiny red cancelPayment" data-id="${esc(p.id)}">ابطال</button></div>`).join('');
+    }
+
+    function openSupplierPayment(preselected='') {
+      const stats = supplierStats(app.main.orders);
+      const options = app.accounting.suppliers.map(s=>`<option value="${esc(s)}" ${preselected===s?'selected':''}>${esc(s)}</option>`).join('');
+      openModal(`
+        <div class="v87-modal-head"><div class="v87-modal-title">ثبت پرداخت به تأمین‌کننده</div><button class="v87-btn tiny" data-close-modal>×</button></div>
+        <div class="v87-alert">مبلغ پرداختی به‌صورت خودکار از قدیمی‌ترین اقلام تسویه‌نشده همان تأمین‌کننده کم می‌شود.</div>
+        <div class="v87-grid two" style="margin-top:12px">
+          <div class="v87-field"><label class="v87-label">تأمین‌کننده</label><select class="v87-select" id="paySupplierName">${options}</select></div>
+          <div class="v87-field"><label class="v87-label">تاریخ شمسی</label><input class="v87-input v87-ltr" id="paySupplierDate" value="${todayFa()}"></div>
+          <div class="v87-field"><label class="v87-label">مبلغ پرداختی</label><input class="v87-input v87-ltr" id="paySupplierAmount" type="number" min="0" placeholder="مبلغ به تومان"></div>
+          <div class="v87-field"><label class="v87-label">یادداشت / شماره پیگیری</label><input class="v87-input" id="paySupplierNote" placeholder="اختیاری"></div>
+        </div>
+        <div class="v87-statusline" style="justify-content:flex-end;margin-top:14px"><button class="v87-btn" data-close-modal>انصراف</button><button class="v87-btn primary" id="saveSupplierPayment">ثبت و تخصیص</button></div>`);
+      $('#saveSupplierPayment')?.addEventListener('click', applySupplierPayment);
+    }
+
+    async function applySupplierPayment() {
+      const supplier = canonicalSupplier($('#paySupplierName')?.value);
+      const amount = Math.max(0,num($('#paySupplierAmount')?.value));
+      const dateFa = normDate($('#paySupplierDate')?.value || todayFa());
+      const note = $('#paySupplierNote')?.value || '';
+      if (!supplier || supplier==='نامشخص' || !amount) return toast('تأمین‌کننده و مبلغ معتبر وارد کن',true);
+      const debts = allItemRecords(app.main.orders).filter(r=>r.supplier===supplier && r.debt>0).sort((a,b)=>num(a.order.createdAt)-num(b.order.createdAt));
+      let remaining = amount;
+      const allocations = [];
+      for (const rec of debts) {
+        if (remaining<=0) break;
+        const add = Math.min(rec.debt, remaining);
+        const old = app.accounting.allocations[rec.key] || {};
+        app.accounting.allocations[rec.key] = { ...old, supplier, paidAmount: rec.paid + add, updatedAt: Date.now() };
+        allocations.push({ key: rec.key, amount: add });
+        remaining -= add;
+      }
+      app.accounting.supplierPayments.push({ id:uid(), supplier, amount, allocatedAmount:amount-remaining, credit:remaining, dateFa, note, allocations, createdAt:Date.now() });
+      await saveAccounting(); closeModal(); renderSuppliers(); updateNeedCount();
+      if (remaining>0) toast(`${money(remaining)} بیشتر از بدهی بود و به‌عنوان اعتبار ثبت شد`); else toast('پرداخت ثبت و روی بدهی‌ها اعمال شد ✅');
+    }
+
+    async function cancelSupplierPayment(id) {
+      const p = app.accounting.supplierPayments.find(x=>String(x.id)===String(id));
+      if (!p || !confirm('این پرداخت باطل شود و مبالغ تخصیص‌یافته به بدهی برگردد؟')) return;
+      for (const x of p.allocations || []) {
+        const old = app.accounting.allocations[x.key] || {};
+        old.paidAmount = Math.max(0,num(old.paidAmount)-num(x.amount));
+        old.updatedAt = Date.now();
+        app.accounting.allocations[x.key] = old;
+      }
+      app.accounting.supplierPayments = app.accounting.supplierPayments.filter(x=>String(x.id)!==String(id));
+      await saveAccounting(); renderSuppliers();
+    }
+
+    function renderSnapp() {
+      const root = $('#view-snapp');
+      const orders = app.main.orders.filter(o=>(o.orderChannel||'')==='اسنپ‌پی').sort((a,b)=>num(b.createdAt)-num(a.createdAt));
+      const expected = orders.reduce((s,o)=>s+expectedSnappNet(o),0);
+      const received = app.accounting.snappSettlements.reduce((s,x)=>s+num(x.amount),0);
+      const orderIds = orders.map(o=>o.id);
+      const items = allItemRecords(orders);
+      const supplierCost = items.reduce((s,r)=>s+r.cost,0);
+      const fees = orders.reduce((s,o)=>s+num(o.snappFee),0);
+      const sales = orders.reduce((s,o)=>s+num(o.revenue),0);
+      const profit = sales-supplierCost-fees;
+      const unpaidSupplier = items.reduce((s,r)=>s+r.debt,0);
+      root.innerHTML = `
+        <div class="v87-page-head"><div><div class="v87-page-title">تسویه اسنپ‌پی</div><div class="v87-page-sub">مبلغ واقعی هر واریز را ثبت کن تا مانده نزد اسنپ‌پی، بدهی تأمین‌کنندگان و سود قابل برداشت مشخص شود.</div></div></div>
+        <div class="v87-grid kpis">
+          <div class="v87-card v87-kpi purple"><div class="v87-kpi-label">فروش اسنپ‌پی</div><div class="v87-kpi-value">${money(sales)}</div><div class="v87-kpi-meta">${fmt(orders.length)} سفارش</div></div>
+          <div class="v87-card v87-kpi orange"><div class="v87-kpi-label">کارمزد + مالیات</div><div class="v87-kpi-value">${money(fees)}</div><div class="v87-kpi-meta">بر اساس اعداد ذخیره‌شده سفارش</div></div>
+          <div class="v87-card v87-kpi"><div class="v87-kpi-label">خالص مورد انتظار</div><div class="v87-kpi-value">${money(expected)}</div><div class="v87-kpi-meta">فروش منهای کارمزدها</div></div>
+          <div class="v87-card v87-kpi green"><div class="v87-kpi-label">واریزی واقعی</div><div class="v87-kpi-value">${money(received)}</div><div class="v87-kpi-meta">ثبت‌شده در این نسخه</div></div>
+          <div class="v87-card v87-kpi red"><div class="v87-kpi-label">مانده نزد اسنپ‌پی</div><div class="v87-kpi-value">${money(Math.max(0,expected-received))}</div><div class="v87-kpi-meta">خالص مورد انتظار منهای واریزی</div></div>
+          <div class="v87-card v87-kpi ${received-unpaidSupplier>=0?'green':'red'}"><div class="v87-kpi-label">وجه آزاد پس از بدهی‌ها</div><div class="v87-kpi-value">${money(received-unpaidSupplier)}</div><div class="v87-kpi-meta">سود حسابداری کل: ${money(profit)}</div></div>
+        </div>
+        <div class="v87-grid two" style="margin-top:12px">
+          <div class="v87-card v87-card-pad">
+            <div class="v87-section-title">ثبت واریزی جدید اسنپ‌پی</div>
+            <div class="v87-grid two">
+              <div class="v87-field"><label class="v87-label">تاریخ واریز شمسی</label><input class="v87-input v87-ltr" id="snappDate" value="${todayFa()}"></div>
+              <div class="v87-field"><label class="v87-label">مبلغ واریزی واقعی</label><input class="v87-input v87-ltr" id="snappAmount" type="number" min="0" placeholder="مبلغ به تومان"></div>
+              <div class="v87-field"><label class="v87-label">شماره پیگیری / عنوان</label><input class="v87-input" id="snappRef" placeholder="مثلاً تسویه هفتگی مرداد"></div>
+              <div class="v87-field"><label class="v87-label">یادداشت</label><input class="v87-input" id="snappNote" placeholder="اختیاری"></div>
+            </div>
+            <div class="v87-label" style="margin-top:13px">سفارش‌های مربوط به این واریز را انتخاب کن</div>
+            <div class="v87-check-list">${orders.length?orders.map(o=>`<label class="v87-check-row"><input type="checkbox" class="snappOrderCheck" value="${esc(o.id)}" ${app.snappSelected.has(String(o.id))?'checked':''}><span><strong>${esc(o.customerName||'بدون نام')}</strong><br><small class="v87-muted">${esc(orderDateFa(o))} · ${esc(o.customerCode||o.id)}</small></span><span>${money(o.revenue)}</span><span>${money(expectedSnappNet(o))}</span></label>`).join(''):`<div class="v87-empty">سفارش اسنپ‌پی وجود ندارد.</div>`}</div>
+            <button class="v87-btn primary" id="saveSnappSettlement" style="margin-top:12px;width:100%">ثبت واریزی و اتصال به سفارش‌ها</button>
+          </div>
+          <div class="v87-card v87-card-pad">
+            <div class="v87-section-title">تاریخچه واریزی‌های اسنپ‌پی</div>
+            ${app.accounting.snappSettlements.length ? [...app.accounting.snappSettlements].sort((a,b)=>num(b.createdAt)-num(a.createdAt)).map(s=>`<div class="v87-payment"><div><strong>${esc(s.reference||'واریزی اسنپ‌پی')}</strong><div class="v87-muted">${esc(s.note||'')}</div></div><div>${esc(s.dateFa||'—')}</div><div><strong>${money(s.amount)}</strong></div><div>${fmt((s.orderIds||[]).length)} سفارش</div><button class="v87-btn tiny red deleteSnapp" data-id="${esc(s.id)}">حذف</button></div>`).join('') : `<div class="v87-empty">هنوز واریزی ثبت نشده است.</div>`}
+          </div>
+        </div>`;
+      $$('.snappOrderCheck',root).forEach(ch=>ch.addEventListener('change',()=>{ if(ch.checked) app.snappSelected.add(String(ch.value)); else app.snappSelected.delete(String(ch.value)); }));
+      $('#saveSnappSettlement',root)?.addEventListener('click',saveSnappSettlement);
+      $$('.deleteSnapp',root).forEach(b=>b.addEventListener('click',()=>deleteSnappSettlement(b.dataset.id)));
+    }
+
+    async function saveSnappSettlement() {
+      const amount = Math.max(0,num($('#snappAmount')?.value));
+      const dateFa = normDate($('#snappDate')?.value || todayFa());
+      const reference = $('#snappRef')?.value || '';
+      const note = $('#snappNote')?.value || '';
+      const orderIds = Array.from(app.snappSelected);
+      if (!amount) return toast('مبلغ واریزی را وارد کن',true);
+      if (!orderIds.length) return toast('حداقل یک سفارش را انتخاب کن',true);
+      app.accounting.snappSettlements.push({id:uid(),amount,dateFa,reference,note,orderIds,createdAt:Date.now()});
+      app.snappSelected.clear();
+      await saveAccounting(); renderSnapp();
+    }
+
+    async function deleteSnappSettlement(id) {
+      if (!confirm('این واریزی حذف شود؟')) return;
+      app.accounting.snappSettlements = app.accounting.snappSettlements.filter(x=>String(x.id)!==String(id));
+      await saveAccounting(); renderSnapp();
+    }
+
+    function renderSettings() {
+      const root = $('#view-settings');
+      root.innerHTML = `
+        <div class="v87-page-head"><div><div class="v87-page-title">تنظیمات و پشتیبان</div><div class="v87-page-sub">تنظیم نام تأمین‌کنندگان، خروجی اطلاعات حسابداری و کنترل اتصال به داده‌های نسخه ۸.۶.</div></div></div>
+        <div class="v87-grid two">
+          <div class="v87-card v87-card-pad"><div class="v87-section-title">وضعیت اتصال</div><div class="v87-statusline"><span class="v87-dot ${app.dbOk?'ok':''}"></span><strong>${app.dbOk?'پایگاه داده OMS شناسایی شد':'داده OMS هنوز شناسایی نشده'}</strong></div><div class="v87-alert ${app.dbOk?'':'warn'}" style="margin-top:12px">${app.dbOk?`تعداد محصولات: ${fmt(app.main.products.length)} · تعداد سفارش‌ها: ${fmt(app.main.orders.length)}. اطلاعات نسخه ۸.۶ فقط خوانده می‌شود و حذف یا بازنویسی نمی‌شود.`:'این فایل را روی همان دامنه و کنار نسخه ۸.۶ اجرا کن تا به همان IndexedDB دسترسی داشته باشد.'}</div><button class="v87-btn primary" id="reloadData" style="margin-top:12px">خواندن دوباره داده‌های OMS</button></div>
+          <div class="v87-card v87-card-pad"><div class="v87-section-title">پشتیبان حسابداری v8.7</div><div class="v87-alert">این پشتیبان فقط شامل تعیین تأمین‌کننده اقلام، پرداخت‌های تأمین‌کنندگان و واریزی‌های اسنپ‌پی است.</div><div class="v87-statusline" style="margin-top:12px"><button class="v87-btn dark" id="exportBackup">⬇ دریافت پشتیبان JSON</button><button class="v87-btn" id="importBackup">⬆ بازیابی پشتیبان</button></div></div>
+        </div>
+        <div class="v87-card v87-card-pad" style="margin-top:12px"><div class="v87-section-title">فهرست تأمین‌کنندگان</div><div id="supplierChips" class="v87-statusline">${app.accounting.suppliers.map(s=>`${badge(s,'purple')}<button class="v87-btn tiny removeSupplier" data-name="${esc(s)}" ${DEFAULT_SUPPLIERS.includes(s)?'disabled title="تأمین‌کننده اصلی"':''}>×</button>`).join('')}</div><div class="v87-statusline no-print" style="margin-top:13px"><input class="v87-input" id="newSupplierName" placeholder="نام تأمین‌کننده جدید" style="max-width:320px"><button class="v87-btn primary" id="addSupplier">افزودن</button></div></div>
+        <div class="v87-card v87-card-pad" style="margin-top:12px"><div class="v87-section-title">اطلاعات نسخه</div><div class="v87-table-wrap"><table class="v87-table" style="min-width:560px"><tbody><tr><td>نسخه</td><td><strong>${VERSION}</strong></td></tr><tr><td>مبنای اجرا</td><td>OMS Pro v8.6 Payment / Supplier / Settlement Reports</td></tr><tr><td>کلید ذخیره حسابداری</td><td class="v87-ltr">${ACCOUNTING_KEY}</td></tr><tr><td>آخرین ذخیره</td><td>${new Date(app.accounting.updatedAt).toLocaleString('fa-IR')}</td></tr></tbody></table></div></div>`;
+      $('#reloadData',root)?.addEventListener('click',refreshAll);
+      $('#exportBackup',root)?.addEventListener('click',exportBackup);
+      $('#importBackup',root)?.addEventListener('click',()=>$('#v87ImportInput').click());
+      $('#addSupplier',root)?.addEventListener('click',async()=>{
+        const name=canonicalSupplier($('#newSupplierName',root)?.value);
+        if(!name||name==='نامشخص')return toast('نام تأمین‌کننده را وارد کن',true);
+        if(!app.accounting.suppliers.includes(name))app.accounting.suppliers.push(name);
+        await saveAccounting(); renderSettings();
+      });
+      $$('.removeSupplier',root).forEach(b=>b.addEventListener('click',async()=>{
+        const n=b.dataset.name;if(DEFAULT_SUPPLIERS.includes(n))return;
+        if(confirm(`تأمین‌کننده «${n}» از فهرست حذف شود؟ اطلاعات قبلی اقلام حذف نمی‌شود.`)){app.accounting.suppliers=app.accounting.suppliers.filter(x=>x!==n);await saveAccounting();renderSettings();}
+      }));
+    }
+
+    function renderActive() {
+      if (app.activeView === 'dashboard') renderDashboard();
+      else if (app.activeView === 'orders') renderOrders();
+      else if (app.activeView === 'suppliers') renderSuppliers();
+      else if (app.activeView === 'snapp') renderSnapp();
+      else renderSettings();
+      $$('.v87-view').forEach(v=>v.classList.toggle('active',v.id===`view-${app.activeView}`));
+      $$('.v87-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===app.activeView));
+    }
+
+    function setView(view) { app.activeView=view; renderActive(); }
+
+    async function refreshAll() {
+      await loadMain(); await loadAccounting(); renderActive(); updateNeedCount(); injectLegacyButton(); toast('اطلاعات تازه‌سازی شد');
+    }
+
+    function updateNeedCount() {
+      const count = allItemRecords(app.main.orders).filter(r=>r.supplier==='نامشخص').length;
+      const el = $('#v87NeedCount');
+      el.textContent = fmt(count);
+      el.classList.toggle('show',count>0);
+    }
+
+    function openPanel(view) {
+      $('#v87Backdrop').classList.add('open');
+      document.body.style.overflow='hidden';
+      if(view)setView(view);else renderActive();
+    }
+    function closePanel() { $('#v87Backdrop').classList.remove('open'); document.body.style.overflow=''; }
+
+    function openModal(html) {
+      $('#v87ModalCard').innerHTML=html;
+      $('#v87Modal').classList.add('open');
+      $$('[data-close-modal]',$('#v87Modal')).forEach(b=>b.addEventListener('click',closeModal));
+    }
+    function closeModal(){ $('#v87Modal').classList.remove('open'); $('#v87ModalCard').innerHTML=''; }
+
+    let toastTimer;
+    function toast(msg,error=false){const el=$('#v87Toast');el.textContent=msg;el.classList.toggle('error',error);el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
+
+    function csvEscape(v){const s=String(v??'');return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}
+    function download(name,content,type='text/plain;charset=utf-8'){
+      const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+    function exportCsv(){
+      const rows=[['تاریخ','کد سفارش','مشتری','منبع پرداخت','محصول','تعداد','قیمت خرید','هزینه کل','تأمین‌کننده','پرداخت‌شده','مانده','وضعیت']];
+      for(const r of allItemRecords(filterOrders()))rows.push([orderDateFa(r.order),r.order.customerCode||r.order.id,r.order.customerName||'',r.order.orderChannel||'',r.name,r.qty,r.buyPrice,r.cost,r.supplier,r.paid,r.debt,r.status]);
+      const csv='\ufeff'+rows.map(row=>row.map(csvEscape).join(',')).join('\r\n');download(`oms-v8.7-supplier-report-${Date.now()}.csv`,csv,'text/csv;charset=utf-8');
+    }
+    function exportBackup(){download(`oms-v8.7-accounting-backup-${Date.now()}.json`,JSON.stringify({type:'OMS_PRO_V87_ACCOUNTING',exportedAt:Date.now(),data:app.accounting},null,2),'application/json');}
+
+    async function importBackupFile(file){
+      try{const parsed=JSON.parse(await file.text());const data=parsed?.type==='OMS_PRO_V87_ACCOUNTING'?parsed.data:parsed;app.accounting=normalizeAccounting(data);await saveAccounting();renderActive();updateNeedCount();toast('پشتیبان با موفقیت بازیابی شد ✅');}catch(e){toast('فایل پشتیبان معتبر نیست',true);}
+    }
+
+    function loadLegacy(index=0){
+      const frame=$('#legacyFrame');
+      if(index>=LEGACY_FILES.length){$('#loaderText').textContent='نسخهٔ پایه پیدا نشد. فایل v8.6 را کنار این فایل قرار بده.';setTimeout(()=>$('#v87Loader').classList.add('done'),2200);return;}
+      const src=LEGACY_FILES[index];
+      let settled=false;
+      const timer=setTimeout(()=>{if(!settled){settled=true;app.legacyLoaded=true;$('#v87Loader').classList.add('done');}},3500);
+      frame.onload=()=>{
+        if(settled)return;
+        try{
+          const doc=frame.contentDocument;
+          const txt=(doc?.body?.innerText||'').trim();
+          const title=doc?.title||'';
+          if((txt.length<300&&/404|not found/i.test(txt+' '+title))||!doc?.body){clearTimeout(timer);settled=true;loadLegacy(index+1);return;}
+        }catch(e){/* cross-origin fallback may still be valid */}
+        clearTimeout(timer);settled=true;app.legacyLoaded=true;$('#v87Loader').classList.add('done');setTimeout(injectLegacyButton,700);
+      };
+      frame.onerror=()=>{if(!settled){clearTimeout(timer);settled=true;loadLegacy(index+1);}};
+      frame.src=src;
+    }
+
+    function injectLegacyButton(){
+      const frame=$('#legacyFrame');
+      let doc;
+      try{doc=frame.contentDocument;if(!doc||!doc.body)return;}catch{return;}
+      const add=()=>{
+        if(doc.getElementById('oms-v87-nav-button'))return;
+        const btn=doc.createElement('button');btn.id='oms-v87-nav-button';btn.type='button';btn.innerHTML='🧾 حساب تأمین‌کنندگان';
+        Object.assign(btn.style,{position:'fixed',left:'18px',bottom:'74px',zIndex:'2147483000',border:'1px solid rgba(255,255,255,.25)',borderRadius:'14px',padding:'10px 13px',background:'linear-gradient(135deg,#6f4df5,#8a65ff)',color:'#fff',fontFamily:'Vazirmatn,Tahoma,sans-serif',fontWeight:'900',boxShadow:'0 12px 32px rgba(54,35,170,.38)',cursor:'pointer'});
+        btn.addEventListener('click',()=>openPanel('dashboard'));doc.body.appendChild(btn);
+      };
+      add();
+      try{new MutationObserver(()=>add()).observe(doc.body,{childList:true,subtree:false});}catch{}
+    }
+
+    async function init(){
+      loadLegacy();
+      await loadMain();await loadAccounting();updateNeedCount();
+      $('#v87Launcher').addEventListener('click',()=>openPanel('dashboard'));
+      $('#v87Close').addEventListener('click',closePanel);
+      $('#v87Refresh').addEventListener('click',refreshAll);
+      $('#v87Print').addEventListener('click',()=>window.print());
+      $('#v87Backdrop').addEventListener('click',e=>{if(e.target===$('#v87Backdrop'))closePanel();});
+      $('#v87Modal').addEventListener('click',e=>{if(e.target===$('#v87Modal'))closeModal();});
+      $$('.v87-tab').forEach(t=>t.addEventListener('click',()=>setView(t.dataset.view)));
+      $('#v87ImportInput').addEventListener('change',e=>{const f=e.target.files?.[0];if(f)importBackupFile(f);e.target.value='';});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('#v87Modal').classList.contains('open'))closeModal();else if($('#v87Backdrop').classList.contains('open'))closePanel();}});
+      window.OMS_V87={open:openPanel,refresh:refreshAll,version:VERSION};
+      setInterval(async()=>{if(!$('#v87Backdrop').classList.contains('open')){await loadMain();updateNeedCount();}},30000);
+    }
+
+    init().catch(e=>{console.error(e);$('#loaderText').textContent='خطا در اجرای ماژول حسابداری؛ صفحه را تازه‌سازی کن.';setTimeout(()=>$('#v87Loader').classList.add('done'),1800);});
+  })();
+  </script>
+</body>
+</html>
