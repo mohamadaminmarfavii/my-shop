@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Patch ساز هفت قلم v9.8.7</title>
+<style>
+body{font-family:Tahoma,Arial,sans-serif;background:#0f1731;color:#fff;margin:0;padding:30px}
+.card{max-width:900px;margin:auto;background:#fff;color:#172033;border-radius:20px;padding:24px;box-shadow:0 20px 60px #0005}
+button,.file{font:inherit;padding:12px 16px;border-radius:12px;border:0}
+button{background:#6f4df5;color:#fff;font-weight:700;cursor:pointer}
+button.alt{background:#eef0f8;color:#172033}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+#log{white-space:pre-wrap;background:#f6f7fb;border:1px solid #e4e7ef;border-radius:12px;padding:14px;min-height:130px;line-height:1.9}
+small{color:#667085}
+.note{background:#fff8e9;border:1px solid #f1d9ad;border-radius:12px;padding:12px;line-height:1.9;margin:12px 0}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>ساخت نسخه حسابرسی هفت قلم v9.8.7</h2>
+<p>این پچر اول اصلاحات رسمی v9.8.6 را اعمال می‌کند، بعد باگ مانده بدهی تأمین‌کنندگان را اصلاح می‌کند.</p>
+<div class="note"><strong>اصلاح اصلی:</strong> مانده تأمین‌کننده دیگر به Carry ماهانه ناقص وابسته نیست. مرجع بدهی برابر است با «مانده شروع + خرید واقعی سفارش‌ها − پرداخت‌های واقعی». یک جدول کنترل عددی هم داخل صفحه تأمین‌کنندگان اضافه می‌شود.</div>
+<div class="row">
+<button id="auto">ساخت خودکار از GitHub</button>
+<label class="file alt">یا فایل v9.8.5 را انتخاب کن <input id="pick" type="file" accept=".html,text/html" hidden></label>
+</div>
+<small>خروجی: hesabrasi-haft-ghalam-v9.8.7-supplier-debt-reconciliation-fix.html</small>
+<div id="log">آماده.</div>
+</div>
+<script>
+const SOURCE_URL="https://raw.githubusercontent.com/mohamadaminmarfavii/my-shop/main/hesabrasi-haft-ghalam-v9.8.5-supplier-profit-report.html";
+const V986_PATCHER_URL="https://raw.githubusercontent.com/mohamadaminmarfavii/my-shop/main/haftghalam-v9.8.6-patcher.html";
+const OUT_NAME="hesabrasi-haft-ghalam-v9.8.7-supplier-debt-reconciliation-fix.html";
+const EXTRA_PAIRS=[{"label": "version-9.8.7", "old": "const VERSION = '9.8.6';", "new": "const VERSION = '9.8.7';"}, {"label": "title-9.8.7", "old": "<title>حسابرسی هفت قلم v9.8.6 · تفکیک پرداخت تأمین‌کننده و سهم همکاری</title>", "new": "<title>حسابرسی هفت قلم v9.8.7 · اصلاح مانده واقعی تأمین‌کنندگان</title>"}, {"label": "supplier-cumulative-balance-core", "old": "    function v2SupplierBalances(){return v8111SupplierBalances(v8111ActiveKey());}", "new": "    // v9.8.7 — مانده واقعی تأمین‌کننده به‌صورت تجمعی از شروع حساب مالی.\n    // این محاسبه به Carry شدن مانده افتتاحیه ماه‌های میانی وابسته نیست.\n    function v987SupplierCumulativeBalances(periodKey=v8111ActiveKey()){\n      const v2=app.accounting?.financialV2,key=String(periodKey||v8111ActiveKey());\n      const start=normDate(v2?.startDateFa||FINANCE_V2_START),startKey=start.slice(0,7),products=productMap();\n      const rows=new Map(),ensure=raw=>{\n        const name=canonicalSupplier(raw||'');\n        if(!name||name==='نامشخص')return null;\n        if(!rows.has(name))rows.set(name,{name,opening:0,purchase:0,settlement:0,balance:0});\n        return rows.get(name);\n      };\n      const opening=v8111Opening(startKey);\n      for(const [raw,value] of Object.entries(opening?.suppliers||{})){\n        const row=ensure(raw);if(row)row.opening+=num(value);\n      }\n      for(const order of app.main?.orders||[]){\n        const dateFa=normDate(orderDateFa(order)),orderKey=dateFa.slice(0,7);\n        if(!dateFa||dateFa<start||orderKey>key||!v94OrderSupplierLiabilityActive(order))continue;\n        for(let i=0;i<(order.items||[]).length;i++){\n          const it=order.items[i],row=ensure(inferredSupplier(order,it,products,i));if(!row)continue;\n          const qty=Math.max(0,num(it.qty||it.quantity||1)),cost=qty*Math.max(0,num(it.buyPrice));\n          row.purchase+=cost;\n        }\n      }\n      for(const tx of v2?.supplierTransactions||[]){\n        const dateFa=normDate(tx?.dateFa||''),txKey=periodKeyOfDate(dateFa);\n        if(!dateFa||dateFa<start||txKey>key)continue;\n        const row=ensure(tx?.supplier);if(!row)continue;\n        row.settlement+=v2SupplierTxnEffect(tx);\n      }\n      const names=new Set([...(app.accounting?.suppliers||[]).map(canonicalSupplier),...rows.keys()]);\n      return [...names].filter(Boolean).map(name=>{\n        const row=rows.get(name)||{name,opening:0,purchase:0,settlement:0};\n        const balance=num(row.opening)+num(row.purchase)-num(row.settlement);\n        return {...row,balance};\n      }).sort((a,b)=>b.balance-a.balance||String(a.name).localeCompare(String(b.name),'fa'));\n    }\n    function v987SupplierDebtAudit(periodKey=v8111ActiveKey()){\n      const key=String(periodKey||v8111ActiveKey());\n      const oldMap=new Map(v8111SupplierBalances(key).map(x=>[canonicalSupplier(x.name),x]));\n      return v987SupplierCumulativeBalances(key).map(row=>{\n        const old=num(oldMap.get(canonicalSupplier(row.name))?.balance),actual=num(row.balance),diff=actual-old;\n        return {...row,oldDisplayed:old,actualDebt:Math.max(0,actual),credit:Math.max(0,-actual),difference:diff,mismatch:Math.abs(diff)>0.01};\n      });\n    }\n    function v987SupplierDebtAuditHtml(periodKey=v8111ActiveKey()){\n      const rows=v987SupplierDebtAudit(periodKey),bad=rows.filter(x=>x.mismatch);\n      if(!rows.length)return '';\n      return `<div class=\"v87-card v87-card-pad\" style=\"margin-bottom:12px;border-color:${bad.length?'#f2c4c4':'#b9ead5'}\">\n        <div class=\"v87-page-head\"><div><div class=\"v87-section-title\">کنترل عددی بدهی تأمین‌کنندگان — v9.8.7</div>\n        <div class=\"v87-page-sub\">فرمول مرجع: مانده شروع حساب مالی + خرید واقعی سفارش‌ها − پرداخت‌های واقعی. این کنترل مستقل از Carry ماهانه است.</div></div>\n        <div>${bad.length?badge(`${fmt(bad.length)} مغایرت اصلاح‌شده`,'red'):badge('ارقام منطبق است','green')}</div></div>\n        <div class=\"v87-table-wrap\"><table class=\"v87-table\" style=\"min-width:980px\"><thead><tr>\n        <th>تأمین‌کننده</th><th>مانده شروع</th><th>خرید از سفارش‌ها</th><th>پرداخت واقعی</th><th>بدهی واقعی</th><th>عدد مسیر ماهانه قدیمی</th><th>اختلاف</th>\n        </tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.name)}</strong></td><td>${money(r.opening)}</td><td>${money(r.purchase)}</td><td>${money(r.settlement)}</td><td><strong>${money(r.actualDebt)}</strong>${r.credit>0?`<div class=\"v87-muted\">اعتبار: ${money(r.credit)}</div>`:''}</td><td>${money(Math.max(0,r.oldDisplayed))}</td><td>${r.mismatch?badge((r.difference>0?'+':'')+money(r.difference),'red'):badge('۰','green')}</td></tr>`).join('')}</tbody></table></div>\n      </div>`;\n    }\n    function v2SupplierBalances(){return v987SupplierCumulativeBalances(v8111ActiveKey());}"}, {"label": "supplier-ledger-authoritative-target", "old": "const balanceMap=new Map(v8111SupplierBalances(key).map(x=>[canonicalSupplier(x.name),x]));", "new": "const balanceMap=new Map(v987SupplierCumulativeBalances(key).map(x=>[canonicalSupplier(x.name),x]));"}, {"label": "supplier-page-authoritative-summary", "old": "? v8111SupplierBalances(activeFinancePeriod).map(b=>{", "new": "? v987SupplierCumulativeBalances(activeFinancePeriod).map(b=>{"}, {"label": "vahid-label-9.8.7", "old": "جمع‌بندی عملیاتی وحید نظری — v9.8.6", "new": "جمع‌بندی عملیاتی وحید نظری — v9.8.7"}, {"label": "supplier-audit-panel", "old": "        <div class=\"v811-safe\" style=\"margin-bottom:12px\"><strong>جمع‌بندی عملیاتی وحید نظری — v9.8.7</strong>", "new": "        ${v987SupplierDebtAuditHtml(activeFinancePeriod||v8111ActiveKey())}\n        <div class=\"v811-safe\" style=\"margin-bottom:12px\"><strong>جمع‌بندی عملیاتی وحید نظری — v9.8.7</strong>"}];
+
+function log(s){document.getElementById('log').textContent=s;}
+function extractV986Pairs(text){
+  const marker="const PAIRS = ";
+  const start=text.indexOf(marker);
+  if(start<0)throw new Error("لیست Patchهای v9.8.6 پیدا نشد.");
+  const valueStart=start+marker.length;
+  const end=text.indexOf("];\n\nfunction log",valueStart);
+  if(end<0)throw new Error("پایان لیست Patchهای v9.8.6 پیدا نشد.");
+  return JSON.parse(text.slice(valueStart,end+1));
+}
+function applyPairs(src,pairs,report){
+  let out=src;
+  for(const p of pairs){
+    const parts=out.split(p.old),n=parts.length-1;
+    report.push(p.label+": "+n);
+    if(n!==1)throw new Error("Patch "+p.label+" باید دقیقاً یک تطابق داشته باشد، ولی "+n+" مورد پیدا شد.");
+    out=parts.join(p.new);
+  }
+  return out;
+}
+async function build(sourceText){
+  log("در حال دریافت منطق v9.8.6...");
+  const pRes=await fetch(V986_PATCHER_URL,{cache:"no-store"});
+  if(!pRes.ok)throw new Error("خطای دریافت پچر v9.8.6: "+pRes.status);
+  const basePairs=extractV986Pairs(await pRes.text());
+  const report=[];
+  let out=applyPairs(sourceText,basePairs,report);
+  out=applyPairs(out,EXTRA_PAIRS,report);
+
+  const a=out.indexOf("<script>"),b=out.lastIndexOf("</script>");
+  if(a<0||b<0)throw new Error("تگ script در خروجی پیدا نشد.");
+  new Function(out.slice(a+8,b));
+  if(!out.includes("const VERSION = '9.8.7';"))throw new Error("نسخه 9.8.7 ثبت نشد.");
+
+  const blob=new Blob([out],{type:"text/html;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;link.download=OUT_NAME;document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+
+  log("✅ نسخه v9.8.7 ساخته شد.\n✅ Syntax Check پاس شد.\n✅ محاسبه تجمعی بدهی تأمین‌کنندگان فعال شد.\n✅ جدول کنترل عددی اضافه شد.\n\n"+report.join("\n")+"\n\nفایل خروجی را اجرا و صفحه «تأمین‌کنندگان و سهم همکاری» را بررسی کن.");
+}
+document.getElementById("auto").onclick=async()=>{
+  try{
+    log("در حال دریافت v9.8.5 از GitHub...");
+    const r=await fetch(SOURCE_URL,{cache:"no-store"});
+    if(!r.ok)throw new Error("خطای دریافت GitHub: "+r.status);
+    await build(await r.text());
+  }catch(e){log("❌ "+e.message+"\nاگر دریافت خودکار نشد، فایل v9.8.5 را با گزینه دوم انتخاب کن.");}
+};
+document.querySelector(".file").onclick=()=>document.getElementById("pick").click();
+document.getElementById("pick").onchange=async e=>{
+  try{
+    const f=e.target.files&&e.target.files[0];if(!f)return;
+    log("فایل انتخاب شد: "+f.name);
+    await build(await f.text());
+  }catch(e){log("❌ "+e.message);}
+};
+</script>
+</body>
+</html>
