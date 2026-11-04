@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>حسابرسی هفت قلم v9.8.7</title>
+<style>
+html,body{height:100%;margin:0}
+body{font-family:Tahoma,Arial,sans-serif;background:#0f1731;color:#fff;display:grid;place-items:center}
+.box{width:min(720px,90vw);background:#fff;color:#172033;border-radius:18px;padding:24px;box-shadow:0 20px 60px #0005;text-align:center}
+.spin{width:38px;height:38px;border:4px solid #e7e8ef;border-top-color:#6f4df5;border-radius:50%;margin:0 auto 16px;animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(360deg)}}
+#msg{line-height:1.9}
+.err{color:#b42318}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spin"></div>
+  <h2>در حال باز کردن حسابرسی هفت قلم v9.8.7</h2>
+  <div id="msg">در حال دریافت نسخه اصلی و اعمال اصلاحات...</div>
+</div>
+<script>
+(async()=>{
+  const msg=document.getElementById('msg');
+  const BASE='https://raw.githubusercontent.com/mohamadaminmarfavii/my-shop/main/hesabrasi-haft-ghalam-v9.8.5-supplier-profit-report.html';
+  const P986='https://raw.githubusercontent.com/mohamadaminmarfavii/my-shop/main/haftghalam-v9.8.6-patcher.html';
+  const P987='https://raw.githubusercontent.com/mohamadaminmarfavii/my-shop/main/haftghalam-v9.8.7-patcher.html';
+
+  function extractJsonArray(text, marker){
+    const p=text.indexOf(marker);
+    if(p<0) throw new Error('بخش اصلاحات پیدا نشد: '+marker);
+    const start=text.indexOf('[',p+marker.length);
+    if(start<0) throw new Error('شروع آرایه اصلاحات پیدا نشد.');
+    let depth=0,inStr=false,esc=false;
+    for(let i=start;i<text.length;i++){
+      const ch=text[i];
+      if(inStr){
+        if(esc){esc=false;continue}
+        if(ch==='\\'){esc=true;continue}
+        if(ch==='"')inStr=false;
+        continue;
+      }
+      if(ch==='"'){inStr=true;continue}
+      if(ch==='[')depth++;
+      else if(ch===']'){
+        depth--;
+        if(depth===0) return JSON.parse(text.slice(start,i+1));
+      }
+    }
+    throw new Error('پایان آرایه اصلاحات پیدا نشد.');
+  }
+
+  function applyPairs(src,pairs,label){
+    let out=src;
+    for(const p of pairs){
+      const parts=out.split(p.old);
+      const n=parts.length-1;
+      if(n!==1) throw new Error(`${label} / ${p.label}: تعداد تطابق ${n} است.`);
+      out=parts.join(p.new);
+    }
+    return out;
+  }
+
+  try{
+    msg.textContent='در حال دریافت نسخه اصلی...';
+    const [baseRes,p986Res,p987Res]=await Promise.all([
+      fetch(BASE+'?t='+Date.now(),{cache:'no-store'}),
+      fetch(P986+'?t='+Date.now(),{cache:'no-store'}),
+      fetch(P987+'?t='+Date.now(),{cache:'no-store'})
+    ]);
+    if(!baseRes.ok) throw new Error('دریافت نسخه اصلی ناموفق بود: '+baseRes.status);
+    if(!p986Res.ok) throw new Error('دریافت اصلاح 9.8.6 ناموفق بود: '+p986Res.status);
+    if(!p987Res.ok) throw new Error('دریافت اصلاح 9.8.7 ناموفق بود: '+p987Res.status);
+
+    const [base,p986,p987]=await Promise.all([baseRes.text(),p986Res.text(),p987Res.text()]);
+    msg.textContent='در حال اعمال اصلاحات حسابداری...';
+
+    const pairs986=extractJsonArray(p986,'const PAIRS = ');
+    const pairs987=extractJsonArray(p987,'const EXTRA_PAIRS=');
+
+    let out=applyPairs(base,pairs986,'v9.8.6');
+    out=applyPairs(out,pairs987,'v9.8.7');
+
+    if(!out.includes("const VERSION = '9.8.7';"))
+      throw new Error('نسخه 9.8.7 در خروجی نهایی تأیید نشد.');
+
+    const a=out.indexOf('<script>'),b=out.lastIndexOf('</script>');
+    if(a<0||b<0) throw new Error('ساختار برنامه نهایی معتبر نیست.');
+    new Function(out.slice(a+8,b));
+
+    document.open();
+    document.write(out);
+    document.close();
+  }catch(e){
+    console.error(e);
+    document.querySelector('.spin')?.remove();
+    msg.className='err';
+    msg.innerHTML='❌ باز کردن برنامه ناموفق بود.<br>'+String(e.message||e);
+  }
+})();
+</script>
+</body>
+</html>
