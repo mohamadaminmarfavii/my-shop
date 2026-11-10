@@ -1,0 +1,543 @@
+<!doctype html><html lang="fa" dir="rtl"><head>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<script>/* Page cache recovery only. Business records, sessions, IndexedDB and queues are untouched. */
+(function(){
+ 'use strict';
+ const BUILD='12.3-20261110';
+ const originalFetch=window.fetch;
+ if(typeof originalFetch==='function')window.fetch=function(input,init){return originalFetch.call(window,input,Object.assign({},init||{},{cache:'no-store'}));};
+ if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
+ const current=new URL(location.href);
+ function isOldShell(reg){
+  try{
+   const scope=new URL(reg.scope);
+   if(scope.origin!==current.origin||!current.href.startsWith(scope.href))return false;
+   return [reg.active,reg.waiting,reg.installing].some(worker=>{
+    if(!worker)return false;const u=new URL(worker.scriptURL);
+    return u.origin===current.origin&&/^haftghalam-mobile-web-sw-v[0-9.]+\.js$/.test(u.pathname.split('/').pop());
+   });
+  }catch{return false;}
+ }
+ navigator.serviceWorker.getRegistrations().then(async registrations=>{
+  const matches=registrations.filter(isOldShell);
+  const outcomes=await Promise.all(matches.map(reg=>reg.unregister().catch(()=>false)));
+  let removed=outcomes.some(Boolean);
+  // Delete only this project's obsolete page-shell caches, never record stores.
+  if('caches' in window){
+   const keys=await caches.keys().catch(()=>[]);
+   await Promise.all(keys.filter(k=>k.startsWith('haftghalam-web-shell-')).map(k=>caches.delete(k).catch(()=>false)));
+  }
+  if(removed&&current.searchParams.get('hgNoCache')!==BUILD){
+   current.searchParams.set('hgNoCache',BUILD);
+   current.searchParams.set('_fresh',String(Date.now()));
+   location.replace(current.href);
+  }
+ }).catch(error=>console.warn('Page cache recovery unavailable',error));
+})();
+</script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0f1731"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="هفت قلم"><title>نسخه ۱۲.۳ · هفت قلم تأمین‌کننده v12.1 — بدون کش صفحه</title><meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https://segfnoaagfsrwkqkwkye.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'">
+<style>:root{--bg:#0f1731;--bg2:#151d3f;--card:#fff;--soft:#f6f7fb;--line:#e6e9f1;--text:#182033;--muted:#687086;--primary:#6f4df5;--primary2:#8a65ff;--green:#0f9f6e;--red:#dc3f55;--orange:#d66a08;--blue:#2563eb;--shadow:0 18px 60px rgba(10,18,48,.22)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);direction:rtl}button,input,select,textarea{font:inherit}.hidden{display:none!important}
+.app{min-height:100vh;background:#f4f6fb;padding-bottom:76px}.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:12px 14px;color:#fff;background:linear-gradient(110deg,#101731,#1d2251 62%,#31206a);box-shadow:0 8px 24px rgba(10,18,48,.18)}.logo{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(135deg,#7558ff,#ad78ff);font-size:21px;box-shadow:0 8px 25px rgba(122,91,255,.42)}.brand{min-width:0;flex:1}.brand b{display:block;font-size:15px}.brand small{display:block;color:#bcc4df;font-size:10px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.net{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800}.dot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px rgba(220,63,85,.14)}.dot.on{background:#11aa78;box-shadow:0 0 0 4px rgba(17,170,120,.12)}
+.content{padding:14px;max-width:900px;margin:0 auto}.page-title{font-size:20px;font-weight:900;color:#172039;margin-bottom:4px}.page-sub{color:var(--muted);font-size:11px;line-height:1.8;margin-bottom:12px}.card{border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 7px 25px rgba(21,34,70,.055);padding:14px;margin-bottom:11px}.card.purple{border-color:#ded5ff;background:linear-gradient(145deg,#fff,#f7f4ff)}.card.green{border-color:#cceee3;background:linear-gradient(145deg,#fff,#f1fbf7)}.grid{display:grid;gap:9px}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi{padding:11px;border:1px solid #e8ebf2;border-radius:13px;background:#fafbfc}.kpi span{display:block;color:#8a91a4;font-size:9px}.kpi strong{display:block;margin-top:5px;color:#252e46;font-size:13px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.input,.select,.textarea{width:100%;padding:11px;color:#1d253a;border:1px solid #dfe3ec;border-radius:11px;outline:none;background:#fff}.input:focus,.select:focus,.textarea:focus{border-color:#8566f8;box-shadow:0 0 0 3px rgba(111,77,245,.10)}.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:9px 13px;border:1px solid #dfe3ec;border-radius:11px;background:#fff;color:#343c50;font-weight:800}.btn.primary{color:#fff;border-color:#6f4df5;background:linear-gradient(135deg,#6f4df5,#8964ff)}.btn.green{color:#fff;border-color:var(--green);background:var(--green)}.btn.red{color:#fff;border-color:var(--red);background:var(--red)}.btn.orange{color:#fff;border-color:var(--orange);background:var(--orange)}.btn.block{width:100%}.btn.small{min-height:32px;padding:6px 9px;font-size:10px}.badge{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid #dfe3ec;border-radius:999px;background:#f8f9fb;color:#5c6479;font-size:9px;font-weight:800;white-space:nowrap}.badge.green{color:#087652;border-color:#bde6d8;background:#ecfbf5}.badge.red{color:#b32940;border-color:#f2c4cd;background:#fff0f3}.badge.orange{color:#a4520b;border-color:#f2d3ad;background:#fff6eb}.badge.purple{color:#5e3fd3;border-color:#d6ccff;background:#f4f1ff}
+.product{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.product-name{font-size:12px;font-weight:900;color:#1c263f;line-height:1.7}.product-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.prices{display:flex;gap:8px;margin-top:8px}.price{padding:7px 9px;border-radius:10px;background:#f7f8fb;border:1px solid #e8ebf2}.price span{display:block;font-size:8px;color:#7d8598}.price b{display:block;margin-top:3px;font-size:11px}.product-actions{display:flex;flex-direction:column;gap:6px}.empty{text-align:center;color:#858da1;padding:28px 12px}.cart-line{display:grid;grid-template-columns:1fr 74px 92px 32px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid #edf0f5}.cart-line:last-child{border-bottom:0}.cart-line .input{padding:8px;font-size:10px}.cart-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #edf0f5;font-weight:900}.request{padding:11px;border:1px solid #e5e8f0;border-radius:13px;background:#fff;margin-bottom:8px}.request h4{margin:0 0 6px;font-size:12px}.request p{margin:3px 0;color:#6d7589;font-size:10px;line-height:1.7}.request-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:30;display:grid;grid-template-columns:repeat(4,1fr);padding:7px 7px calc(7px + env(safe-area-inset-bottom));background:#121a35;border-top:1px solid #222c50}.navbtn{border:0;background:transparent;color:#bfc7df;padding:7px 3px;border-radius:11px;font-size:9px;font-weight:800}.navbtn span{display:block;font-size:19px;margin-bottom:3px}.navbtn.active{color:#fff;background:linear-gradient(135deg,rgba(111,77,245,.52),rgba(138,101,255,.22))}.login-wrap{min-height:100vh;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 30% 20%,#24265f 0,#111831 48%,#0b1128 100%)}.login-card{width:min(420px,100%);padding:22px;border:1px solid rgba(255,255,255,.15);border-radius:24px;background:rgba(255,255,255,.08);box-shadow:var(--shadow);backdrop-filter:blur(18px);color:#fff}.login-card .input{margin-top:9px}.login-title{text-align:center;font-size:20px;font-weight:900}.login-sub{text-align:center;color:#cbd2eb;font-size:11px;line-height:1.9;margin:7px 0 14px}.toast{position:fixed;left:16px;right:16px;bottom:86px;z-index:50;padding:12px 14px;color:#fff;background:#19223e;border-radius:13px;box-shadow:var(--shadow);font-size:11px;font-weight:800;opacity:0;transform:translateY(12px);pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:none}.toast.error{background:#b72f47}.modal{position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:16px;background:rgba(8,12,30,.72)}.modal.open{display:grid}.modal-card{width:min(520px,100%);max-height:90vh;overflow:auto;padding:16px;border-radius:20px;background:#fff}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.alert{padding:11px 12px;border:1px solid #d7dffc;border-radius:13px;background:#f1f5ff;color:#3e4d78;font-size:10px;line-height:1.8}.alert.warn{border-color:#f0d3ab;background:#fff7ec;color:#895015}.section-title{font-size:14px;font-weight:900;color:#202941;margin-bottom:9px}.muted{color:#7b8397}.queue-pill{position:absolute;top:-3px;right:20%;min-width:18px;height:18px;padding:0 5px;display:none;align-items:center;justify-content:center;border-radius:99px;background:#ef334f;color:#fff;font-size:8px}.queue-pill.show{display:flex}
+@media(min-width:720px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.product-actions{flex-direction:row}.bottomnav{left:50%;right:auto;transform:translateX(-50%);width:min(700px,100%);border-radius:18px 18px 0 0}}
+body{background:#eef1fa}.topbar,header{background:linear-gradient(115deg,#101731,#252355 65%,#522b8d)}.card{border:1px solid #e8e2f4;border-radius:17px;box-shadow:0 6px 20px #28184c0d}.btn.primary{background:linear-gradient(120deg,#6435ce,#8b56ea);color:white}.page-title{color:#251a48}.badge.purple{background:#eee3ff;color:#522595}.product-name{font-size:15px}.product-actions .btn{min-height:44px}.catalog-banner{background:linear-gradient(115deg,#191b45,#4e2682);color:white;padding:15px 18px;border-radius:17px;margin-bottom:12px}.catalog-banner .page-title,.catalog-banner .page-sub{color:white}.catalog-banner .page-sub{opacity:.9}.toolbar .input,.toolbar .select{font-size:16px;min-height:44px}.stock-qty{font-size:12px;font-weight:bold}.product>*{min-width:0}@media(max-width:540px){.product{grid-template-columns:minmax(0,1fr)}.product-actions{display:flex;flex-wrap:wrap;gap:8px}.product-actions .btn{flex:1 1 130px}.toolbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto}.toolbar #search{grid-column:1/-1}.toolbar #supplierFilter{max-width:none!important}.prices{flex-wrap:wrap}.cart-line{display:flex;flex-wrap:wrap}.cart-line input{max-width:120px}}
+.product-actions{align-items:stretch}.product-actions .btn{flex:0 0 auto;min-height:44px;padding:8px 12px;line-height:1.35;font-size:12px}.product-actions .btn[disabled]{opacity:.52;cursor:not-allowed}.bottomnav .navbtn{min-width:0;min-height:48px;white-space:normal;font-size:11px}
+@media(max-width:540px){.product-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(120px,100%),1fr));gap:6px}.product-actions .btn{width:100%;min-width:0;min-height:44px}.card{padding:12px}.product-name{font-size:14px}.cart-line input{font-size:16px}.cart-line{align-items:center}}
+.trade-form-grid,.trade-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.trade-label{display:block;margin:12px 0}.trade-form-grid label,.trade-inputs label{font-size:12px;min-width:0}.trade-cart-line{padding:12px 0;border-bottom:1px solid #ece6f5}.trade-line-title{display:flex;align-items:center;justify-content:space-between;gap:8px}.trade-quantity{font-size:12px;color:#65537a;margin:6px 0}.trade-hint{font-size:12px;background:#f5f0ff;color:#593783;border-radius:10px;padding:10px}.trade-form-grid input,.trade-inputs input{font-size:16px;min-width:0}.trade-form-grid .select{font-size:14px}@media(max-width:370px){.trade-form-grid{grid-template-columns:1fr}}
+[hidden]{display:none!important}.stock-filter-toggle{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff;border:1px solid #ddd6fe;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:12px;font-weight:800}.stock-filter-toggle input{accent-color:#7448ef;width:18px;height:18px}.stock-filter-toggle small{font-weight:400;color:#64748b;font-size:10px}
+</style></head><body>
+<div id="login" class="login-wrap"><form class="login-card" id="loginForm" autocomplete="on"><div class="logo" style="margin:0 auto 12px">💎</div><div class="login-title">هفت قلم وب</div><div class="login-sub">لیست قیمت، ثبت سفارش آفلاین و درخواست تغییر قیمت<br>ورود امن با حساب شبکه فروش</div><input id="email" name="username" autocapitalize="none" spellcheck="false" class="input" type="email" autocomplete="username" placeholder="ایمیل"><input id="password" name="password" class="input" type="password" autocomplete="current-password" placeholder="رمز عبور"><label style="display:flex;align-items:center;gap:8px;margin-top:10px;color:#fff"><input id="rememberLogin" type="checkbox" checked> مرا در این دستگاه به خاطر بسپار</label><div style="margin-top:7px;font-size:10px;color:#cbd2eb">با این گزینه، نشست ورود در همین مرورگر حفظ می‌شود.</div><button type="submit" id="loginBtn" class="btn primary block" style="margin-top:12px">ورود</button><div id="loginMsg" style="margin-top:10px;font-size:10px;color:#ffc8d2;line-height:1.8"></div></form></div>
+<div id="shell" class="app hidden"><header class="topbar"><div class="logo">💎</div><div class="brand"><b>هفت قلم وب · ۱۲.۳</b><small id="profileLine">در حال دریافت دسترسی…</small></div><div class="net"><i id="netDot" class="dot"></i><span id="netText">آفلاین</span></div></header><main id="content" class="content"></main><nav class="bottomnav"><button class="navbtn active" data-tab="products"><span>📦</span>محصولات</button><button class="navbtn" data-tab="order"><span>🧾</span>سفارش جدید</button><button class="navbtn" data-tab="requests" style="position:relative"><i id="reqBadge" class="queue-pill"></i><span>🔔</span>درخواست‌ها</button><button class="navbtn" data-tab="settings" style="position:relative"><i id="queueBadge" class="queue-pill"></i><span>⚙️</span>تنظیمات</button></nav></div>
+<div id="modal" class="modal"><div class="modal-card"><div class="modal-head"><b id="modalTitle">عنوان</b><button id="modalClose" class="btn small">✕</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
+<script>window.HG_CONFIG = Object.freeze({
+  supabaseUrl: 'https://segfnoaagfsrwkqkwkye.supabase.co',
+  publishableKey: 'sb_publishable_km8F_B9bD7NwKiKjbDL7Cg_fq70L3TR',
+  appName: 'هفت قلم وب',
+  version: '12.1-nocache'
+});
+</script><script>(function(root,factory){
+  const api=factory();
+  if(typeof module==='object' && module.exports) module.exports=api;
+  root.HGCore=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  const fa='۰۱۲۳۴۵۶۷۸۹', ar='٠١٢٣٤٥٦٧٨٩';
+  function normalizeDigits(v){return String(v??'').replace(/[۰-۹]/g,d=>String(fa.indexOf(d))).replace(/[٠-٩]/g,d=>String(ar.indexOf(d)));}
+  function num(v){const s=normalizeDigits(v).replace(/[٬,\s]/g,'');const n=Number(s);return Number.isFinite(n)?n:0;}
+  function money(v){return Math.round(num(v)).toLocaleString('fa-IR');}
+  function uuid(){if(globalThis.crypto&&crypto.randomUUID)return crypto.randomUUID();return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)});}
+  function normalizePhone(v){let s=normalizeDigits(v).replace(/\D/g,'');if(s.startsWith('0098'))s='0'+s.slice(4);else if(s.startsWith('98'))s='0'+s.slice(2);else if(s.length===10&&s.startsWith('9'))s='0'+s;return s;}
+  function safeParse(raw,fallback){if(raw===null||raw===undefined||raw==='')return fallback;try{const v=JSON.parse(raw);return v===null||v===undefined?fallback:v}catch{return fallback}}
+  function cartTotal(items){return (items||[]).reduce((sum,x)=>sum+Math.max(0,(num(x.quantity)||1)*num(x.unit_sale_price)-num(x.line_discount)),0)}
+  function upsertCart(cart,p,qty=1){const list=[...(cart||[])],i=list.findIndex(x=>x.product_ref===p.product_ref);if(i>=0)list[i]={...list[i],quantity:Math.max(1,num(list[i].quantity)+qty)};else list.push({product_ref:p.product_ref,product_name:p.product_name,quantity:Math.max(1,qty),unit_sale_price:num(p.sale_price),line_discount:0});return list;}
+  function normalizeSearchText(v){
+    let s=normalizeDigits(v??'');
+    try{s=s.normalize('NFKC')}catch{}
+    return s
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g,'')
+      .replace(/[يى]/g,'ی')
+      .replace(/ك/g,'ک')
+      .replace(/[ۀة]/g,'ه')
+      .replace(/ؤ/g,'و')
+      .replace(/[إأٱ]/g,'ا')
+      .replace(/[\u200c\u200d\u200e\u200f\ufeff]/g,' ')
+      .replace(/[ـ]/g,'')
+      .replace(/\s+/g,' ')
+      .trim()
+      .toLowerCase();
+  }
+  function filterProducts(rows,q){
+    const s=normalizeSearchText(q);
+    if(!s)return rows||[];
+    const aliases=new Set([s]);
+    if(s==='فیتو')aliases.add('phyto');
+    if(s==='phyto')aliases.add('فیتو');
+    return (rows||[]).filter(p=>{
+      const hay=normalizeSearchText([p.product_name,p.brand,p.category,p.supplier,p.product_ref].join(' '));
+      for(const a of aliases){if(a&&hay.includes(a))return true;}
+      return false;
+    });
+  }
+  function queueAdd(queue,item){const q=[...(queue||[])];if(q.some(x=>x.idempotency_key===item.idempotency_key&&x.type===item.type))return q;q.push({...item,queued_at:item.queued_at||Date.now(),tries:item.tries||0});return q;}
+  function queueMarkFailure(queue,key,error){return (queue||[]).map(x=>x.idempotency_key===key?{...x,tries:(x.tries||0)+1,last_error:String(error||''),last_try_at:Date.now()}:x)}
+  function queueRemove(queue,key){return (queue||[]).filter(x=>x.idempotency_key!==key)}
+  function canSupplierChange(profile,product){return !!profile&&profile.is_active!==false&&profile.can_request_price_changes===true&&(profile.app_role==='manager'||(profile.app_role==='supplier'&&String(profile.supplier_name||'')===String(product.supplier||'')));}
+  function orderPayload(form,cart){return {
+    p_customer_name:String(form.customer_name||'').trim(),
+    p_customer_phone:normalizePhone(form.customer_phone||''),
+    p_customer_source:String(form.customer_source||'اپ موبایل').trim(),
+    p_payment_method:form.payment_method||'cash',
+    p_seller_note:String(form.seller_note||'').trim(),
+    p_idempotency_key:form.idempotency_key||uuid(),
+    p_items:(cart||[]).map(x=>({product_ref:x.product_ref,quantity:Math.max(1,Math.trunc(num(x.quantity)||1)),unit_sale_price:Math.max(0,num(x.unit_sale_price)),line_discount:Math.max(0,num(x.line_discount))}))
+  }}
+  return {normalizeDigits,num,money,uuid,normalizePhone,safeParse,cartTotal,upsertCart,filterProducts,queueAdd,queueMarkFailure,queueRemove,canSupplierChange,orderPayload};
+});
+</script><script>(()=>{
+'use strict';
+const C=window.HGCore, CFG=window.HG_CONFIG;
+const K={
+  session:'hg_supplier_v10_session_v1',
+  profile:'hg_supplier_v10_profile_v1',
+  legacyCatalog:'hg_supplier_v10_catalog_v1',
+  catalogAt:'hg_supplier_v10_catalog_at_v1',
+  queue:'hg_supplier_v10_queue_v1',
+  tab:'hg_supplier_v10_tab_v1',
+  lastPending:'hg_supplier_v10_pending_v1',
+  orders:'hg_supplier_v10_orders_v1',
+  priceRequests:'hg_supplier_v10_price_requests_v1',
+  lastEmail:'hg_supplier_v10_last_email_v1'
+};
+let rememberLogin=!sessionStorage.getItem(K.session);
+const initialSession=C.safeParse(sessionStorage.getItem(K.session)||localStorage.getItem(K.session),null);
+function persistLogin(session){
+  const keep=rememberLogin?localStorage:sessionStorage;
+  const discard=rememberLogin?sessionStorage:localStorage;
+  keep.setItem(K.session,JSON.stringify(session));
+  discard.removeItem(K.session);
+}
+function clearLogin(){
+  localStorage.removeItem(K.session);
+  sessionStorage.removeItem(K.session);
+  S.session=null;S.profile=null;S.cart=[];S.catalog=[];orderDraft=freshDraft();editingRequest=null;
+}
+const userKey=(key,session)=>key+':'+(session?.user?.id||'guest');
+const S={
+  session:initialSession,
+  profile:C.safeParse(localStorage.getItem(userKey(K.profile,initialSession)),null),
+  catalog:[],
+  catalogVersion:'',
+  catalogSavedAt:C.num(localStorage.getItem(K.catalogAt)),
+  lastMetaCheck:0,
+  queue:C.safeParse(localStorage.getItem(userKey(K.queue,initialSession)),[]),
+  tab:localStorage.getItem(K.tab)||'products',
+  cart:[],
+  online:navigator.onLine,
+  orders:C.safeParse(localStorage.getItem(userKey(K.orders,initialSession)),[]),
+  priceRequests:C.safeParse(localStorage.getItem(userKey(K.priceRequests,initialSession)),[]),
+  agents:[],
+  syncing:false,
+  catalogSyncing:false
+};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function save(k,v){
+  const raw=JSON.stringify(v);
+  try{localStorage.setItem(k,raw)}
+  catch(e){
+    try{localStorage.removeItem(K.legacyCatalog);localStorage.setItem(k,raw)}
+    catch{throw e}
+  }
+}
+
+const OFFLINE_DB='haftghalam-mobile-offline-v1', OFFLINE_STORE='kv';
+let offlineDbPromise=null;
+function openOfflineDb(){
+  if(!('indexedDB' in window))return Promise.reject(new Error('IndexedDB در این مرورگر در دسترس نیست'));
+  if(offlineDbPromise)return offlineDbPromise;
+  offlineDbPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(OFFLINE_DB,1);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(OFFLINE_STORE))db.createObjectStore(OFFLINE_STORE)};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('باز کردن حافظه آفلاین ناموفق بود'));
+  });
+  return offlineDbPromise;
+}
+async function idbGet(key){
+  const db=await openOfflineDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(OFFLINE_STORE,'readonly');
+    const req=tx.objectStore(OFFLINE_STORE).get(key);
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbSet(key,value){
+  const db=await openOfflineDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(OFFLINE_STORE,'readwrite');
+    tx.objectStore(OFFLINE_STORE).put(value,key);
+    tx.oncomplete=()=>resolve(true);
+    tx.onerror=()=>reject(tx.error);
+    tx.onabort=()=>reject(tx.error||new Error('ذخیره آفلاین لغو شد'));
+  });
+}
+async function idbDelete(key){
+  const db=await openOfflineDb();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(OFFLINE_STORE,'readwrite');
+    tx.objectStore(OFFLINE_STORE).delete(key);
+    tx.oncomplete=()=>resolve(true);
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+function catalogCacheKey(){
+  const uid=S.profile?.user_id||S.session?.user?.id||'guest';
+  return `supplier-v10:catalog:${uid}`;
+}
+async function loadOfflineCatalog(){
+  try{
+    const cached=await idbGet(catalogCacheKey());
+    if(cached&&Array.isArray(cached.rows)){
+      S.catalog=cached.rows;
+      S.catalogVersion=String(cached.version||'');
+      S.catalogSavedAt=C.num(cached.savedAt)||0;
+      if(S.catalogSavedAt)localStorage.setItem(K.catalogAt,String(S.catalogSavedAt));
+      return;
+    }
+  }catch{}
+  const legacy=C.safeParse(localStorage.getItem(K.legacyCatalog),[]);
+  if(Array.isArray(legacy)&&legacy.length){
+    S.catalog=legacy;
+    S.catalogSavedAt=C.num(localStorage.getItem(K.catalogAt))||Date.now();
+    try{await idbSet(catalogCacheKey(),{rows:S.catalog,version:'legacy',savedAt:S.catalogSavedAt})}catch{}
+    localStorage.removeItem(K.legacyCatalog);
+  }
+}
+async function persistCatalog(rows,version){
+  const savedAt=Date.now();
+  await idbSet(catalogCacheKey(),{rows,version,savedAt});
+  S.catalog=rows;
+  S.catalogVersion=String(version||'');
+  S.catalogSavedAt=savedAt;
+  localStorage.setItem(K.catalogAt,String(savedAt));
+  localStorage.removeItem(K.legacyCatalog);
+}
+function toast(msg,err=false){const e=$('#toast');e.textContent=msg;e.className='toast show'+(err?' error':'');clearTimeout(toast.t);toast.t=setTimeout(()=>e.className='toast',2800)}
+function modal(title,html){$('#modalTitle').textContent=title;$('#modalBody').innerHTML=html;$('#modal').classList.add('open')}
+function closeModal(){$('#modal').classList.remove('open')}
+function roleLabel(){return S.profile?.app_role==='manager'?'مدیر':S.profile?.app_role==='supplier'?`تأمین‌کننده · ${S.profile.supplier_name||''}`:'بدون دسترسی'}
+function updateChrome(){
+  $('#netDot')?.classList.toggle('on',S.online); if($('#netText'))$('#netText').textContent=S.online?'آنلاین':'آفلاین';
+  if($('#profileLine'))$('#profileLine').textContent=S.profile?`${roleLabel()} · ${S.catalog.length.toLocaleString('fa-IR')} محصول`:'در حال دریافت دسترسی…';
+  const qb=$('#queueBadge');if(qb){qb.textContent=String(S.queue.length).toLocaleString('fa-IR');qb.classList.toggle('show',S.queue.length>0)}
+  const pending=(S.orders||[]).filter(x=>x.status==='submitted').length+(S.priceRequests||[]).filter(x=>x.status==='pending').length;
+  const rb=$('#reqBadge');if(rb){rb.textContent=String(pending).toLocaleString('fa-IR');rb.classList.toggle('show',pending>0)}
+}
+function setAuthUI(){const ok=!!S.session?.access_token;$('#login').classList.toggle('hidden',ok);$('#shell').classList.toggle('hidden',!ok);if(ok){updateChrome();setTab(S.tab,false)}}
+async function fetchJson(path,opt={},retry=true){
+  const headers={'apikey':CFG.publishableKey,'Content-Type':'application/json',...(opt.headers||{})};
+  if(opt.auth!==false&&S.session?.access_token)headers.Authorization=`Bearer ${S.session.access_token}`;
+  let res;
+  try{res=await fetch(CFG.supabaseUrl+path,{method:opt.method||'GET',headers,body:opt.body===undefined?undefined:JSON.stringify(opt.body)})}catch(e){throw new Error('NETWORK:'+e.message)}
+  if(res.status===401&&retry&&S.session?.refresh_token){await refreshSession();return fetchJson(path,opt,false)}
+  const text=await res.text();let data=null;try{data=text?JSON.parse(text):null}catch{data=text}
+  if(!res.ok){let msg=data?.message||data?.error_description||data?.hint||data?.details||`خطای ${res.status}`;if(data?.error_code==='invalid_credentials'||/invalid login credentials/i.test(String(msg)))msg='ایمیل یا رمز عبور اشتباه است';throw new Error(msg)}
+  return data;
+}
+async function login(email,password,remember){
+  const cleanEmail=String(email||'').trim();
+  const data=await fetchJson('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email:cleanEmail,password}});
+  S.session=data;
+  S.profile=null;S.catalog=[];S.catalogVersion='';S.catalogSavedAt=0;S.cart=[];S.orders=[];S.priceRequests=[];liveStock={};stockAt=0;
+  S.queue=C.safeParse(localStorage.getItem(userKey(K.queue,data)),[]);
+  rememberLogin=remember;
+  orderDraft=freshDraft();
+  await loadProfile();
+  persistLogin(S.session);
+  await bootstrap();
+  if(remember&&cleanEmail)localStorage.setItem(K.lastEmail,cleanEmail);
+  else localStorage.removeItem(K.lastEmail);
+}
+let refreshInFlight=null;
+async function refreshSession(){
+  if(refreshInFlight)return refreshInFlight;
+  if(!S.session?.refresh_token)throw new Error('نشست ورود منقضی شده');
+  refreshInFlight=(async()=>{
+    const data=await fetchJson('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:S.session.refresh_token}},false);
+    S.session=data;persistLogin(data);return data;
+  })();
+  try{return await refreshInFlight}finally{refreshInFlight=null}
+}
+async function keepLoginFresh(){
+  if(S.online&&S.session?.refresh_token&&Number(S.session.expires_at)*1000<Date.now()+90000){
+    try{await refreshSession()}catch(error){if(String(error.message).startsWith('NETWORK:'))return;toast('برای ادامه دوباره وارد حساب شو.',true);}
+  }
+}
+async function logout(){try{await fetchJson('/auth/v1/logout',{method:'POST'})}catch{};clearLogin();setAuthUI()}
+async function loadProfile(){const rows=await fetchJson('/rest/v1/rpc/hg_mobile_my_profile',{method:'POST',body:{}});S.profile=Array.isArray(rows)?rows[0]:rows;if(!S.profile?.is_active)throw new Error('این حساب هنوز برای اپ موبایل فعال نشده است');save(userKey(K.profile,S.session),S.profile)}
+function catalogMetaVersion(meta){
+  if(!meta)return '';
+  return [
+    String(meta.catalog_signature||''),
+    String(meta.price_override_updated_at||''),
+    String(meta.product_count||0)
+  ].join('|');
+}
+async function fetchCatalogMeta(){
+  const rows=await fetchJson('/rest/v1/rpc/hg_mobile_catalog_meta',{method:'POST',body:{}});
+  return Array.isArray(rows)?(rows[0]||null):rows;
+}
+async function downloadFullCatalog(meta,show=true){
+  if(S.catalogSyncing)return false;
+  S.catalogSyncing=true;
+  try{
+    const pageSize=250;
+    let offset=0, all=[];
+    for(let page=0;page<20;page++){
+      const rows=await fetchJson('/rest/v1/rpc/hg_trade_catalog',{method:'POST',body:{p_limit:pageSize,p_offset:offset}});
+      const batch=Array.isArray(rows)?rows:[];
+      all.push(...batch);
+      if(batch.length<pageSize)break;
+      offset+=pageSize;
+    }
+    const seen=new Set();
+    const cleaned=all.filter(p=>{
+      const k=String(p?.product_ref||'');
+      if(!k||seen.has(k))return false;
+      seen.add(k);
+      return true;
+    });
+    const freshMeta=meta||await fetchCatalogMeta();
+    const expected=Number(freshMeta?.product_count);
+    if(Number.isFinite(expected)&&cleaned.length!==expected)throw new Error('دریافت کامل کاتالوگ انجام نشد. دوباره بروزرسانی کن.');
+    const version="trade-v1|"+catalogMetaVersion(freshMeta);
+    await persistCatalog(cleaned,version);
+    updateChrome();
+    if(show)toast(`لیست قیمت بروزرسانی شد · ${S.catalog.length.toLocaleString('fa-IR')} محصول`);
+    renderCurrent();
+    return true;
+  }finally{
+    S.catalogSyncing=false;
+  }
+}
+async function ensureCatalogFresh(show=false,force=false){
+  if(!S.online){
+    if(force)throw new Error('اینترنت قطع است؛ لیست آفلاین قبلی در دسترس است');
+    return false;
+  }
+  const meta=await fetchCatalogMeta();
+  S.lastMetaCheck=Date.now();
+  const version="trade-v1|"+catalogMetaVersion(meta);
+  const expected=C.num(meta?.product_count);
+  const same=!force&&S.catalog.length>0&&S.catalog.length===expected&&S.catalogVersion===version;
+  if(same){
+    if(show)toast(`لیست قیمت به‌روز است · ${S.catalog.length.toLocaleString('fa-IR')} محصول`);
+    return false;
+  }
+  return downloadFullCatalog(meta,show);
+}
+async function syncCatalog(show=true,force=true){
+  return ensureCatalogFresh(show,force);
+}
+async function autoCatalogCheck(){
+  if(!S.online||!S.session||S.catalogSyncing)return;
+  if(Date.now()-S.lastMetaCheck<25000)return;
+  try{if(Date.now()-stockAt>=25000){await refreshLiveStock();if(S.tab==='products'&&!$('#search')?.matches(':focus'))renderCurrent();}await ensureCatalogFresh(false,false)}catch{}
+}
+async function bootstrap(){
+  setAuthUI();
+  if($('#content'))$('#content').innerHTML='<div class="card"><div class="section-title">در حال دریافت اطلاعات…</div><div class="page-sub">پروفایل، لیست محصولات و صف آفلاین در حال آماده‌سازی است.</div></div>';
+  await loadOfflineCatalog();
+  if(S.online){
+    try{await loadProfile()}catch(e){if(!S.profile)throw e}
+    await loadOfflineCatalog();
+    updateChrome();
+    try{await syncQueue(false)}catch{}
+    try{await refreshLiveStock()}catch(e){toast(e.message,true)}
+    try{await ensureCatalogFresh(false,S.catalog.length===0)}catch(e){if(!S.catalog.length)throw e}
+    try{await refreshRequests(false)}catch{}
+  }else{
+    if(!S.profile||!S.catalog.length)throw new Error('برای استفاده آفلاین، یک‌بار باید با اینترنت وارد شوی و همگام‌سازی انجام شود');
+    updateChrome();
+  }
+  renderCurrent();
+  updateChrome();
+}
+function setTab(tab,render=true){S.tab=tab;localStorage.setItem(K.tab,tab);$$('.navbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));if(render)renderCurrent()}
+function renderCurrent(){if(!S.session||!S.profile)return;updateChrome();if(S.tab==='products')renderProducts();else if(S.tab==='order')renderOrder();else if(S.tab==='requests')renderRequests();else renderSettings()}
+let liveStock={},stockAt=0,productQuery='',supplierQuery='';
+const STOCK_FILTER_KEY='hg_supplier_available_only_v1';
+let onlyAvailable=localStorage.getItem(STOCK_FILTER_KEY)!=='0';
+async function refreshLiveStock(){
+  liveStock=await fetchJson('/rest/v1/rpc/hg_stock_snapshot',{method:'POST',body:{}})||{};
+  stockAt=Date.now();
+}
+function stockFor(ref){if(!Object.hasOwn(liveStock,ref))return null;const raw=liveStock[ref];if(raw===null||raw===undefined||String(raw).trim()===''||typeof raw==='boolean')return null;const n=Number(raw);return Number.isFinite(n)&&n>=0?n:null;}
+function stockState(p){const qty=stockFor(p.product_ref);if(qty!==null)return {qty,status:qty>0?'available':'unavailable',label:qty>0?'موجود':'ناموجود'};const a=String(p.availability||'').replace(/ي/g,'ی').replace(/ك/g,'ک').trim().toLowerCase();if(/ناموجود|out[\s_-]*of[\s_-]*stock|outofstock|unavailable|تمام شده/.test(a))return {qty:null,status:'unavailable',label:'ناموجود'};if(/^(موجود|instock|in[\s_-]*stock|available)$/.test(a))return {qty:null,status:'available',label:'موجود مرجع'};return {qty:null,status:'inquiry',label:'استعلام'};}
+function validStockCart(lines){return lines.every(x=>stockFor(x.product_ref)!==null&&Number.isInteger(Number(x.quantity))&&Number(x.quantity)>0&&Number(x.quantity)<=stockFor(x.product_ref));}
+function productCard(p){const can=C.canSupplierChange(S.profile,p);const st=stockState(p),qty=st.qty,avail=st.label;const cls=st.status==='available'?'green':st.status==='unavailable'?'red':'orange';return `<div class="card"><div class="product"><div><div class="product-name">${esc(p.product_name)}</div><div class="product-meta"><span class="badge ${cls}">${esc(avail)}</span><span class="badge purple stock-qty">${qty==null?'تعداد نامشخص':C.money(qty)+' عدد'}</span><span class="badge">${esc(p.supplier||'—')}</span>${p.brand?`<span class="badge purple">${esc(p.brand)}</span>`:''}</div><div class="prices"><div class="price"><span>قیمت خرید</span><b>${p.buy_price==null?'مخفی':C.money(p.buy_price)+' ت'}</b></div><div class="price"><span>قیمت فروش</span><b>${p.sale_price==null?'مخفی':C.money(p.sale_price)+' ت'}</b></div>${p.price_source==='mobile_approved'?'<span class="badge green" style="align-self:center">تأیید موبایل</span>':''}</div></div><div class="product-actions"><button class="btn primary small" data-add="${esc(p.product_ref)}" ${st.status==='available'&&S.profile?.can_submit_orders?'':'disabled'}>＋ افزودن به فاکتور</button>${can?`<button class="btn orange small" data-price="${esc(p.product_ref)}">درخواست تغییر قیمت</button>`:''}</div></div></div>`}
+function renderProducts(){
+  const suppliers=[...new Set((S.catalog||[]).map(p=>String(p.supplier||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fa'));
+  const opts=['<option value="">همه تأمین‌کننده‌ها</option>',...suppliers.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`)].join('');
+  $('#content').innerHTML=`<div class="catalog-banner"><div class="page-title">جست‌وجوی سراسری محصولات</div><div class="page-sub">مرجع هفت‌قلم · ${S.catalog.length.toLocaleString('fa-IR')} محصول · آخرین همگام‌سازی ${lastCatalogText()}</div></div><div class="toolbar"><input id="search" class="input" placeholder="جستجو نام، برند، تأمین‌کننده…" style="flex:1"><select id="supplierFilter" class="select" style="max-width:220px">${opts}</select><button id="syncCatalog" class="btn primary">↻ بروزرسانی</button></div><label class="stock-filter-toggle"><input id="onlyAvailable" type="checkbox" ${onlyAvailable?'checked':''}> فقط موجودها <small>موجودی عددی اولویت دارد؛ در نبود تعداد، وضعیت مرجع ملاک است.</small></label><div id="resultInfo" class="page-sub" aria-live="polite"></div><div id="productList"></div>`;
+  $('#search').value=productQuery;$('#supplierFilter').value=supplierQuery;
+  const draw=()=>{
+    const q=productQuery=$('#search').value; const supplier=supplierQuery=$('#supplierFilter').value;
+    let matched=C.filterProducts(S.catalog,q);
+    if(supplier) matched=matched.filter(p=>String(p.supplier||'')===supplier);
+    if(onlyAvailable)matched=matched.filter(p=>stockState(p).status==='available');
+    const rows=matched.slice(0,180);
+    $('#resultInfo').textContent=`${matched.length.toLocaleString('fa-IR')} نتیجه${matched.length>180?' · برای سبک‌ماندن صفحه ۱۸۰ مورد اول نمایش داده می‌شود؛ برای بقیه جستجو کن':''}`;
+    $('#productList').innerHTML=rows.length?rows.map(productCard).join(''):'<div class="card empty">محصولی پیدا نشد</div>';
+    bindProductActions();
+  };
+  $('#search').addEventListener('input',draw);
+  $('#supplierFilter').addEventListener('change',draw);
+  $('#onlyAvailable').addEventListener('change',e=>{onlyAvailable=e.target.checked;localStorage.setItem(STOCK_FILTER_KEY,onlyAvailable?'1':'0');draw()});
+  $('#syncCatalog').onclick=async()=>{try{await refreshLiveStock();await syncCatalog();renderProducts()}catch(e){toast(e.message,true)}};
+  draw();
+}
+function bindProductActions(){
+  $$('[data-add]').forEach(b=>b.onclick=()=>{const p=S.catalog.find(x=>x.product_ref===b.dataset.add);if(!p||!S.profile?.can_submit_orders)return;if(stockState(p).status!=='available')return toast('این محصول موجود نیست یا نیاز به استعلام دارد',true);const cart=C.upsertCart(S.cart,p,1);if(cart.some(x=>stockFor(x.product_ref)!==null&&Number(x.quantity)>stockFor(x.product_ref)))return toast('موجودی کافی نیست',true);S.cart=cart.map(x=>x.product_ref===p.product_ref&&x.quantity===1?{...x,unit_sale_price:saleFor(p,orderDraft.type)}:x);toast('به سفارش اضافه شد');setTab('order')});
+  $$('[data-price]').forEach(b=>b.onclick=()=>openPriceModal(b.dataset.price));
+}
+function openPriceModal(ref){const p=S.catalog.find(x=>x.product_ref===ref);if(!p||!C.canSupplierChange(S.profile,p))return;modal('درخواست تغییر قیمت خرید',`<div class="alert">${esc(p.product_name)}<br>قیمت خرید فعلی: <b>${C.money(p.buy_price)} تومان</b></div><label style="display:block;margin:10px 0 5px;font-size:10px;font-weight:bold">قیمت خرید جدید</label><input id="newBuy" class="input" inputmode="numeric" value="${Math.round(C.num(p.buy_price)||0)}"><button id="sendPrice" class="btn primary block" style="margin-top:10px">ارسال برای تأیید مدیر</button>`);$('#sendPrice').onclick=()=>queueOrSendPrice(p,$('#newBuy').value)}
+async function queueOrSendPrice(p,val){const newPrice=C.num(val);if(newPrice<=0)return toast('قیمت جدید معتبر نیست',true);const item={type:'price',idempotency_key:C.uuid(),payload:{p_product_ref:p.product_ref,p_proposed_buy_price:newPrice,p_idempotency_key:null},label:p.product_name};item.payload.p_idempotency_key=item.idempotency_key;if(!S.online){S.queue=C.queueAdd(S.queue,item);save(userKey(K.queue,S.session),S.queue);updateChrome();closeModal();return toast('درخواست قیمت آفلاین ذخیره شد')};try{await sendQueueItem(item);closeModal();toast('درخواست تغییر قیمت ارسال شد');await refreshRequests(false)}catch(e){if(String(e.message).startsWith('NETWORK:')){S.queue=C.queueAdd(S.queue,item);save(userKey(K.queue,S.session),S.queue);closeModal();toast('اینترنت قطع شد؛ درخواست در صف آفلاین ماند')}else toast(e.message,true)}}
+const sourceOptions=['اینستاگرام','واتساپ','کانال بله','تلگرام','سایت خودم','حضوری','مشتری مستقیم تأمین‌کننده'];
+const digiOptions={digipay_4pay:'دیجی‌پی چهارقسطه · کارمزد ۹٪ + مالیات',digipay_1pay:'دیجی‌پی تک‌قسطه · کارمزد ۱۰٪ + مالیات',digipay_credit:'دیجی‌پی تسهیلات · کارمزد ۱۳٪ + مالیات',digipay_wallet:'دیجی‌پی کیف پول · کارمزد ۱۰٪ + مالیات'};
+const paymentOptions={...digiOptions,cash:'نقد',card_transfer:'کارت‌به‌کارت',pos:'دستگاه پوز',snapp_pay:'اسنپ‌پی',site_gateway:'درگاه سایت',direct_installment:'اقساط مستقیم',other:'سایر'};
+function todayOrderFa(){return new Intl.DateTimeFormat('en-US-u-ca-persian',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).filter(x=>['year','month','day'].includes(x.type)).sort((a,b)=>['year','month','day'].indexOf(a.type)-['year','month','day'].indexOf(b.type)).map(x=>x.value).join('/')}
+function freshDraft(){return {name:'',phone:'',date:todayOrderFa(),source:'',type:'retail',profit:true,payment:'cash',recipient:'هفت‌قلم',otherRecipient:'',note:'',key:C.uuid()}}
+let orderDraft=freshDraft();
+let editingRequest=null;
+function saleFor(product,type){const price=type==='wholesale'?product.wholesale_sale_price:product.sale_price;return Number(price)>0?Number(price):Number(product.sale_price)||0}
+function updateCartTotal(){const el=$('#cartTotal');if(el)el.textContent=C.money(C.cartTotal(S.cart))+' تومان'}
+function renderOrder(){
+ const d=orderDraft;
+ const lines=S.cart.map((x,i)=>`<div class="trade-cart-line"><div class="trade-line-title"><b>${esc(x.product_name)}</b><button type="button" class="btn red small" data-rm="${i}" aria-label="حذف قلم">×</button></div><div class="trade-quantity">${d.type==='wholesale'&&!(Number(S.catalog.find(p=>p.product_ref===x.product_ref)?.wholesale_sale_price)>0)?'قیمت عمده ثبت نشده؛ قیمت خرده قابل ویرایش نمایش داده شده است. · ':''}موجودی ${stockFor(x.product_ref)??'ثبت نشده'} · مانده پس از تأیید ${stockFor(x.product_ref)==null?'نامشخص':C.money(Math.max(0,stockFor(x.product_ref)-x.quantity))}</div><div class="trade-inputs"><label>تعداد<input class="input" type="number" min="1" step="1" data-q="${i}" value="${x.quantity}"></label><label>قیمت واحد (تومان)<input class="input" type="number" min="0" data-sp="${i}" value="${Math.round(C.num(x.unit_sale_price))}"></label></div></div>`).join('');
+ $('#content').innerHTML=`<div class="page-title">${editingRequest?'ویرایش درخواست #'+esc(editingRequest.request_no):'سبد فاکتور چندمحصولی'}</div><p class="page-sub">تمام محصولات این سبد با یک مشتری، یک شماره درخواست و یک فاکتور ارسال می‌شوند. کسر موجودی فقط بعد از تأیید نهایی مدیر است.</p>${editingRequest?'<div class="alert warn">با ارسال ویرایش، بررسی قبلی اقلام لغو می‌شود و فاکتور برای بررسی دوباره می‌رود. درخواست نهایی یا تأییدشده قابل تغییر نیست.</div>':''}<div class="toolbar"><button class="btn small" id="addMoreProducts">＋ افزودن محصول دیگر</button><button class="btn small" id="newInvoice">فاکتور تازه / خروج از ویرایش</button></div><div class="card"><label class="trade-label">نوع فروش<select id="tradeType" class="select"><option value="retail">خرده</option><option value="wholesale">عمده</option></select></label><label class="trade-label">جست‌وجو و افزودن محصول در همین فاکتور<input id="invoiceSearch" class="input" placeholder="نام یا برند محصول…" autocomplete="off"></label><div id="invoiceResults"></div>${lines||'<div class="empty">محصول را جست‌وجو کن و به همین فاکتور اضافه کن.</div>'}<div class="cart-total"><span>جمع فروش</span><span id="cartTotal">${C.money(C.cartTotal(S.cart))} تومان</span></div></div><div class="card"><div class="section-title">مشتری و مشخصات سفارش</div><div class="trade-form-grid"><label>نام و نام خانوادگی<input id="custName" class="input" autocomplete="off" value="${esc(d.name)}"></label><label>شماره تماس<input id="custPhone" class="input" inputmode="tel" value="${esc(d.phone)}"></label><label>تاریخ شمسی سفارش<input id="orderDate" class="input" dir="ltr" value="${esc(d.date)}" placeholder="1405/08/16"></label><label>منبع مشتری<select id="orderSource" class="select"><option value="">انتخاب کن</option>${sourceOptions.map(x=>`<option>${x}</option>`).join('')}</select></label></div><label class="trade-label">سود هفت‌قلم<select id="storeProfit" class="select"><option value="yes">سود هفت‌قلم محاسبه شود</option><option value="no">فروش مستقل تأمین‌کننده؛ بدون سود هفت‌قلم</option></select></label><p id="profitHelp" class="trade-hint"></p><div class="trade-form-grid"><label>روش پرداخت<select id="payMethod" class="select">${Object.entries(paymentOptions).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><label>دریافت‌کننده وجه<select id="paymentRecipient" class="select"><option>هفت‌قلم</option><option>وحید نظری</option><option>امین مرفاوی</option><option>شخص دیگر</option></select></label></div><label id="otherRecipientWrap" class="trade-label">نام دریافت‌کننده دیگر<input class="input" id="otherRecipient" value="${esc(d.otherRecipient)}"></label><label class="trade-label">توضیحات<textarea id="orderNote" class="textarea" rows="3">${esc(d.note)}</textarea></label><button id="submitOrder" type="button" class="btn primary block">${editingRequest?(S.online?'ذخیره و ارسال ویرایش':'ذخیره ویرایش در صف آفلاین'):(S.online?(d.profit?'ارسال فاکتور برای تأیید مدیر':'ارسال فروش مستقل؛ بدون سود هفت‌قلم'):'ذخیره درخواست آفلاین')}</button></div>`;
+ $('#addMoreProducts').onclick=()=>setTab('products');
+ $('#newInvoice').onclick=()=>{if(S.cart.length&&!confirm('سبد فعلی کنار گذاشته شود؟ درخواست ارسال‌شده حذف نمی‌شود.'))return;editingRequest=null;S.cart=[];editingRequest=null;orderDraft=freshDraft();renderOrder()};
+ $('#invoiceSearch').oninput=e=>{const q=e.target.value.trim();const rows=q?C.filterProducts(S.catalog,q,'').filter(p=>!onlyAvailable||stockState(p).status==='available').slice(0,20):[];$('#invoiceResults').innerHTML=rows.map(p=>`<button type="button" class="btn block small" style="margin:5px 0;text-align:right;justify-content:space-between" data-invoice-add="${esc(p.product_ref)}"><span>${esc(p.product_name)} · ${stockFor(p.product_ref)??'نامشخص'} عدد</span><span>＋</span></button>`).join('');$$('[data-invoice-add]').forEach(b=>b.onclick=()=>{const p=S.catalog.find(x=>x.product_ref===b.dataset.invoiceAdd);const next=C.upsertCart(S.cart,p,1);if(!validStockCart(next))return toast('موجودی کافی نیست یا هنوز ثبت نشده',true);S.cart=next.map(x=>x.product_ref===p.product_ref&&x.quantity===1?{...x,unit_sale_price:saleFor(p,d.type)}:x);renderOrder()})};
+ $('#tradeType').value=d.type;$('#orderSource').value=d.source;$('#storeProfit').value=d.profit?'yes':'no';$('#payMethod').value=d.payment;$('#paymentRecipient').value=d.recipient;
+ const explain=()=>{$('#profitHelp').textContent=d.profit?'مدیر سهم هفت‌قلم و قوانین همکاری را بررسی می‌کند.':'ثبت مشتری و کسر موجودی انجام می‌شود. بهای کالای متعلق به فرد دیگر جدا پیگیری می‌شود.';$('#otherRecipientWrap').hidden=d.recipient!=='شخص دیگر'};explain();
+ const bind=(id,key,event='input')=>$(id).addEventListener(event,e=>{d[key]=e.target.value});
+ bind('#custName','name');bind('#custPhone','phone');bind('#orderDate','date');bind('#orderNote','note');bind('#otherRecipient','otherRecipient');bind('#orderSource','source','change');bind('#payMethod','payment','change');
+ $('#paymentRecipient').onchange=e=>{d.recipient=e.target.value;explain()};
+ $('#storeProfit').onchange=e=>{d.profit=e.target.value==='yes';explain()};
+ $('#tradeType').onchange=e=>{
+  if(S.cart.length&&!confirm('قیمت اقلام سبد با قیمت نوع فروش انتخابی جایگزین شود؟')){e.target.value=d.type;return}
+  d.type=e.target.value;S.cart=S.cart.map(x=>({...x,unit_sale_price:saleFor(S.catalog.find(p=>p.product_ref===x.product_ref)||{},d.type)}));renderOrder()
+ };
+ $$('[data-q]').forEach(el=>el.onchange=()=>{const line=S.cart[+el.dataset.q],q=C.num(el.value);if(!Number.isInteger(q)||q<1||(stockFor(line.product_ref)!=null&&q>stockFor(line.product_ref))){el.value=line.quantity;return toast('تعداد معتبر و حداکثر برابر موجودی وارد کن',true)}line.quantity=q;renderOrder()});
+ $$('[data-sp]').forEach(el=>el.onchange=()=>{const price=C.num(el.value);if(!Number.isFinite(price)||price<=0){el.value=S.cart[+el.dataset.sp].unit_sale_price;return toast('قیمت مثبت وارد کن',true)}S.cart[+el.dataset.sp].unit_sale_price=price;updateCartTotal()});
+ $$('[data-rm]').forEach(el=>el.onclick=()=>{S.cart.splice(+el.dataset.rm,1);renderOrder()});
+ $('#submitOrder').onclick=async e=>{const button=e.currentTarget;button.disabled=true;try{await submitOrder()}finally{button.disabled=false}};
+}
+async function submitOrder(){
+ const d=orderDraft;
+ if(!S.cart.length)return toast('حداقل یک محصول اضافه کن',true);
+ if(!validStockCart(S.cart))return toast(S.cart.some(x=>stockFor(x.product_ref)===null)?'وضعیت موجود است، اما تعداد قابل سفارش ثبت نشده؛ از مدیر بخواه تعداد این اقلام را ثبت کند.':'موجودی اقلام کافی نیست؛ تعداد سفارش را اصلاح کن.',true);
+ if(!d.name.trim()||!d.source)return toast('نام مشتری و منبع مشتری را وارد کن.',true);
+ const date=C.normalizeDigits(d.date).trim();
+ if(!/^\d{4}\/(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])$/.test(date)||date>todayOrderFa())return toast('تاریخ شمسی معتبر و حداکثر امروز وارد کن.',true);
+ const recipient=d.recipient==='شخص دیگر'?d.otherRecipient.trim():d.recipient;
+ if(!recipient)return toast('نام دریافت‌کننده وجه را وارد کن.',true);
+ const payload={...C.orderPayload({customer_name:d.name,customer_phone:d.phone,customer_source:d.source,payment_method:digiOptions[d.payment]?'other':['pos','card_transfer'].includes(d.payment)?'cash':d.payment,seller_note:(digiOptions[d.payment]?'[HG-DIGIPAY:'+d.payment+']\n':'')+d.note,idempotency_key:d.key},S.cart),p_customer_type:d.type,p_order_date_fa:date,p_calculate_store_profit:d.profit,p_payment_detail:digiOptions[d.payment]?'other':d.payment,p_payment_recipient:recipient};
+ const item={type:editingRequest?'order_edit':'order',edit_request:editingRequest?{id:editingRequest.id,revision:editingRequest.invoice_revision||0}:null,idempotency_key:d.key,payload,label:d.name};
+ if(!S.online){S.queue=C.queueAdd(S.queue,item);save(userKey(K.queue,S.session),S.queue);S.cart=[];editingRequest=null;orderDraft=freshDraft();updateChrome();renderOrder();return toast('درخواست آفلاین ذخیره شد')}
+ try{const r=await sendQueueItem(item);S.cart=[];editingRequest=null;orderDraft=freshDraft();renderOrder();toast(`سفارش #${r?.request_no||''} برای تأیید ارسال شد`);await refreshRequests(false)}
+ catch(e){if(String(e.message).startsWith('NETWORK:')){S.queue=C.queueAdd(S.queue,item);save(userKey(K.queue,S.session),S.queue);S.cart=[];editingRequest=null;orderDraft=freshDraft();updateChrome();renderOrder();toast('درخواست در صف آفلاین ماند')}else toast(e.message,true)}
+}
+async function sendQueueItem(item){if(item.type==='order_edit'){return fetchJson('/rest/v1/rpc/hg_invoice_update',{method:'POST',body:{p_request_id:item.edit_request.id,p_expected_revision:item.edit_request.revision,p_payload:item.payload}});}if(item.type==='order'){await refreshLiveStock();if(!validStockCart(item.payload.p_items))throw new Error('موجودی اقلام کافی نیست. تعداد سفارش را اصلاح کن.');return fetchJson(item.payload.p_customer_type?'/rest/v1/rpc/hg_trade_submit':'/rest/v1/rpc/hg_mobile_submit_sales_request',{method:'POST',body:item.payload});}if(item.type==='price')return fetchJson('/rest/v1/rpc/hg_mobile_request_price_change',{method:'POST',body:item.payload});throw new Error('نوع صف ناشناخته است')}
+async function syncQueue(show=true){if(S.syncing||!S.online||!S.session)return;S.syncing=true;let sent=0;try{for(const item of [...S.queue]){try{await sendQueueItem(item);S.queue=C.queueRemove(S.queue,item.idempotency_key);save(userKey(K.queue,S.session),S.queue);sent++}catch(e){if(String(e.message).startsWith('NETWORK:'))break;S.queue=C.queueMarkFailure(S.queue,item.idempotency_key,e.message);save(userKey(K.queue,S.session),S.queue)}}}finally{S.syncing=false;updateChrome()}if(show)toast(sent?`${sent.toLocaleString('fa-IR')} مورد همگام شد`:'صف آفلاین مورد قابل ارسال ندارد');if(sent)await refreshRequests(false)}
+async function refreshRequests(show=true){
+  if(!S.online){if(show)toast('آفلاین هستی؛ آخرین درخواست‌های ذخیره‌شده نمایش داده می‌شوند');return}
+  const ord=await fetchJson('/rest/v1/sales_requests?select=id,request_no,status,customer_name,customer_phone,customer_source,payment_method,declared_total,seller_note,manager_note,agent_id,created_at,submitted_at,linked_order_id,customer_type,order_date_fa,calculate_store_profit,payment_detail,payment_recipient,invoice_revision,updated_at,sales_request_items(id,product_ref,product_name,quantity,unit_sale_price,line_discount,review_status,manager_note)&order=created_at.desc&limit=100');
+  S.orders=Array.isArray(ord)?ord:[];save(userKey(K.orders,S.session),S.orders);
+  const pr=await fetchJson('/rest/v1/mobile_price_change_requests?select=id,status,supplier_name,product_ref,product_name,old_buy_price,proposed_buy_price,manager_note,requested_by,updated_at,created_at,reviewed_at&order=created_at.desc&limit=100');
+  S.priceRequests=Array.isArray(pr)?pr:[];save(userKey(K.priceRequests,S.session),S.priceRequests);
+  const pendingOrders=S.orders.filter(x=>x.status==='submitted').length;
+  const pendingPrices=S.priceRequests.filter(x=>x.status==='pending').length;
+  const pending=pendingOrders+pendingPrices;
+  const last=C.num(localStorage.getItem(K.lastPending));
+  if(S.profile?.app_role==='manager'&&pending>last){
+    const diff=pending-last;
+    const latestPrice=S.priceRequests.find(x=>x.status==='pending');
+    const msg=latestPrice&&pendingPrices>0
+      ? `${diff.toLocaleString('fa-IR')} درخواست جدید برای بررسی · ${latestPrice.supplier_name||'تأمین‌کننده'}: ${latestPrice.product_name||'تغییر قیمت'}`
+      : `${diff.toLocaleString('fa-IR')} درخواست جدید برای بررسی داری`;
+    toast(msg);
+    if(window.AndroidBridge?.notifyUser)window.AndroidBridge.notifyUser('هفت قلم',msg);
+  }
+  localStorage.setItem(K.lastPending,String(pending));
+  updateChrome();
+  if(show)toast('درخواست‌ها بروزرسانی شد');
+  if(S.tab==='requests')renderRequests();
+}
+function statusBadge(s){const map={submitted:['در انتظار بررسی','orange'],approved:['تأیید شده','green'],rejected:['رد شده','red'],needs_revision:['نیاز به اصلاح','purple'],converted:['ثبت نهایی','green'],pending:['در انتظار','orange'],cancelled:['لغو','red']};const x=map[s]||[s,''];return `<span class="badge ${x[1]}">${x[0]}</span>`}
+function renderRequests(){
+  const isMgr=S.profile?.app_role==='manager';const orders=S.orders.map(r=>`<div class="request"><h4>سفارش #${esc(r.request_no)} · ${esc(r.customer_name)}</h4><p>${(r.sales_request_items||[]).map(x=>esc(x.product_name)+' × '+C.money(x.quantity)).join(' · ')}</p><p>${esc(r.customer_phone||'')}${r.linked_order_id?' · ثبت شده در مرجع':''}</p><p>${statusBadge(r.status)} · ${C.money(r.declared_total)} ت · ${esc(paymentOptions[r.payment_detail||r.payment_method]||r.payment_method)} · ${r.customer_type==='wholesale'?'عمده':'خرده'} · ${esc(r.order_date_fa||'')} · ${r.calculate_store_profit===false?'فروش مستقل':'با سود هفت‌قلم'}</p><p>دریافت وجه ${esc(r.payment_recipient||'هفت‌قلم')} · منبع ${esc(r.customer_source||'ثبت نشده')}</p>${r.seller_note?`<p>یادداشت: ${esc(r.seller_note)}</p>`:''}${!isMgr&&['submitted','needs_revision','draft'].includes(r.status)&&!r.linked_order_id?`<div class="request-actions"><button class="btn primary small" data-edit-order="${esc(r.id)}">ویرایش همین فاکتور</button></div>`:''}${r.manager_note?`<p>نظر مدیر: ${esc(r.manager_note)}</p>`:''}<p>${(r.sales_request_items||[]).map(x=>esc(x.product_name)+' — '+esc(({pending:'در انتظار',approved:'تأیید',rejected:'رد',needs_revision:'نیازمند اصلاح'})[x.review_status]||'در انتظار')+(x.manager_note?' ('+esc(x.manager_note)+')':'')).join('<br>')}</p>${isMgr&&r.status==='submitted'?`<div class="request-actions"><button class="btn green small" data-or="approve" data-id="${r.id}">تأیید اولیه</button><button class="btn orange small" data-or="needs_revision" data-id="${r.id}">اصلاح</button><button class="btn red small" data-or="reject" data-id="${r.id}">رد</button></div>`:''}</div>`).join('');const prices=S.priceRequests.map(r=>`<div class="request"><h4>${esc(r.product_name)}</h4><p>${statusBadge(r.status)} · ${esc(r.supplier_name)}</p><p>خرید قبلی: <b>${C.money(r.old_buy_price)} ت</b> ← پیشنهادی: <b>${C.money(r.proposed_buy_price)} ت</b></p>${r.status==='pending'&&r.requested_by===S.session?.user?.id?`<div class="request-actions"><button class="btn orange small" data-edit-price="${esc(r.id)}">ویرایش قیمت پیشنهادی</button></div>`:''}${isMgr&&r.status==='pending'?`<div class="request-actions"><button class="btn green small" data-pr="approve" data-id="${r.id}">تأیید قیمت</button><button class="btn red small" data-pr="reject" data-id="${r.id}">رد</button></div>`:''}</div>`).join('');
+  $('#content').innerHTML=`<div class="page-title">🔔 درخواست‌ها</div><div class="page-sub">سفارش‌ها وارد شبکه فروش می‌شوند؛ تبدیل نهایی به OMS همچنان در برنامه اصلی انجام می‌شود.</div><div class="toolbar"><button id="refreshReq" class="btn primary">↻ بروزرسانی</button></div><div class="card"><div class="section-title">سفارش‌ها</div>${orders||'<div class="empty">درخواستی نیست</div>'}</div><div class="card"><div class="section-title">تغییر قیمت خرید</div>${prices||'<div class="empty">درخواستی نیست</div>'}</div>`;$('#refreshReq').onclick=()=>refreshRequests();$$('[data-edit-order]').forEach(b=>b.onclick=()=>editSubmittedInvoice(b.dataset.editOrder));$$('[data-edit-price]').forEach(b=>b.onclick=()=>editPendingPrice(b.dataset.editPrice));$$('[data-or]').forEach(b=>b.onclick=()=>reviewOrder(b.dataset.id,b.dataset.or));$$('[data-pr]').forEach(b=>b.onclick=()=>reviewPrice(b.dataset.id,b.dataset.pr));
+}
+async function editSubmittedInvoice(id){
+ try{if(S.online)await refreshRequests(false);const r=S.orders.find(x=>x.id===id);if(!r||!['submitted','needs_revision','draft'].includes(r.status)||r.linked_order_id)return toast('درخواست دیگر قابل ویرایش نیست',true);if(S.cart.length&&!confirm('سبد فعلی با این درخواست جایگزین شود؟'))return;editingRequest={id:r.id,request_no:r.request_no,invoice_revision:r.invoice_revision||0};S.cart=(r.sales_request_items||[]).map(x=>({...x}));const known=['هفت‌قلم','وحید نظری','امین مرفاوی'];orderDraft={...freshDraft(),name:r.customer_name||'',phone:r.customer_phone||'',source:r.customer_source||'',date:r.order_date_fa||todayOrderFa(),type:r.customer_type||'retail',profit:r.calculate_store_profit!==false,payment:Object.keys(digiOptions).find(k=>String(r.seller_note||'').includes('[HG-DIGIPAY:'+k+']'))||r.payment_detail||r.payment_method||'cash',recipient:known.includes(r.payment_recipient)?r.payment_recipient:'شخص دیگر',otherRecipient:known.includes(r.payment_recipient)?'':r.payment_recipient||'',note:String(r.seller_note||'').replace(/\[HG-DIGIPAY:digipay_(?:4pay|1pay|credit|wallet)\]\s*/g,'')};setTab('order');}catch(e){toast(e.message,true)}
+}
+async function editPendingPrice(id){const r=S.priceRequests.find(x=>x.id===id);if(!r||!S.online)return toast('ویرایش قیمت به اینترنت نیاز دارد',true);const raw=prompt('قیمت خرید پیشنهادی جدید به تومان:',String(r.proposed_buy_price));if(raw===null)return;const price=C.num(raw);if(price<=0)return toast('قیمت معتبر وارد کن',true);try{await fetchJson('/rest/v1/rpc/hg_invoice_edit_price',{method:'POST',body:{p_request_id:id,p_expected_updated_at:r.updated_at,p_price:price}});await refreshRequests(false);toast('قیمت همان درخواست ویرایش شد')}catch(e){toast(e.message,true)}}
+async function reviewOrder(id,action){try{await fetchJson('/rest/v1/rpc/hg_mobile_review_sales_request',{method:'POST',body:{p_request_id:id,p_action:action,p_manager_note:null}});toast('وضعیت سفارش ثبت شد');await refreshRequests(false)}catch(e){toast(e.message,true)}}
+async function reviewPrice(id,action){try{await fetchJson('/rest/v1/rpc/hg_mobile_review_price_change',{method:'POST',body:{p_request_id:id,p_action:action,p_manager_note:null}});toast(action==='approve'?'قیمت تأیید شد':'درخواست رد شد');await Promise.all([refreshRequests(false),syncCatalog(false)])}catch(e){toast(e.message,true)}}
+function lastCatalogText(){const t=S.catalogSavedAt||C.num(localStorage.getItem(K.catalogAt));if(!t)return 'هنوز انجام نشده';try{return new Date(t).toLocaleString('fa-IR')}catch{return '—'}}
+async function safeClearPageCache(){if('caches' in window){const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('haftghalam-web-shell-')).map(k=>caches.delete(k)))}if('serviceWorker' in navigator){const page=new URL(location.href);for(const reg of await navigator.serviceWorker.getRegistrations()){const worker=reg.active||reg.waiting||reg.installing;if(!worker)continue;const u=new URL(worker.scriptURL);if(u.origin===page.origin&&page.href.startsWith(reg.scope)&&/^haftghalam-mobile-web-sw-v[0-9.]+\.js$/.test(u.pathname.split('/').pop()))await reg.unregister()}}}
+function renderSettings(){
+  $('#content').innerHTML=`<div class="page-title">⚙️ تنظیمات</div><div class="page-sub">لیست محصولات در IndexedDB ذخیره می‌شود تا روی موبایل با چند هزار محصول به سقف localStorage نخورد. بررسی تغییرات مرجع هم خودکار انجام می‌شود.</div><div class="grid kpis"><div class="kpi"><span>وضعیت</span><strong>${S.online?'آنلاین':'آفلاین'}</strong></div><div class="kpi"><span>صف آفلاین</span><strong>${S.queue.length.toLocaleString('fa-IR')}</strong></div><div class="kpi"><span>محصول ذخیره</span><strong>${S.catalog.length.toLocaleString('fa-IR')}</strong></div><div class="kpi"><span>نسخه</span><strong>${esc(CFG.version)}</strong></div></div><div class="card"><div class="section-title">همگام‌سازی</div><button id="syncAll" class="btn primary block">↻ همگام‌سازی الآن</button><div class="alert" style="margin-top:9px">آخرین دریافت لیست قیمت: ${lastCatalogText()}<br>بررسی خودکار تغییرات: هنگام بازشدن/برگشت به صفحه و هر ۳۰ ثانیه. درخواست‌های جدید قیمت و سفارش هم هر ۳۰ ثانیه بررسی می‌شوند. دانلود کامل فقط وقتی خود محصولات تغییر کرده باشند.<br>اگر اینترنت قطع شود، سفارش‌ها در گوشی باقی می‌مانند و بعداً ارسال می‌شوند.</div></div><div class="card"><div class="section-title">فضا و کش</div><button id="clearCache" class="btn block">🧹 پاک کردن کش برنامه</button><button id="clearCatalog" class="btn block" style="margin-top:8px">پاک کردن لیست آفلاین محصولات</button><div class="alert warn" style="margin-top:9px">پاک کردن کش، سفارش‌های در صف را حذف نمی‌کند. پاک کردن لیست آفلاین فقط کاتالوگ ذخیره‌شده را پاک می‌کند.</div></div><div class="card"><button id="logout" class="btn red block">خروج از حساب</button></div>`;
+  $('#syncAll').onclick=async()=>{try{await syncQueue(false);await syncCatalog(false,true);await refreshRequests(false);toast('همگام‌سازی کامل شد')}catch(e){toast(e.message,true)}};$('#clearCache').onclick=async()=>{try{await safeClearPageCache();toast('کش صفحه حذف شد؛ اطلاعات و سفارش‌ها حفظ شدند.');const u=new URL(location.href);u.searchParams.set('_fresh',String(Date.now()));location.replace(u.href)}catch(e){toast('تازه‌سازی صفحه انجام نشد',true)}};$('#clearCatalog').onclick=async()=>{if(confirm('لیست آفلاین محصولات پاک شود؟ سفارش‌های در صف حذف نمی‌شوند.')){try{await idbDelete(catalogCacheKey())}catch{}S.catalog=[];S.catalogVersion='';S.catalogSavedAt=0;localStorage.removeItem(K.legacyCatalog);localStorage.removeItem(K.catalogAt);updateChrome();renderCurrent();toast('لیست آفلاین پاک شد')}};$('#logout').onclick=logout;
+}
+window.hgOnNetworkChanged=async online=>{S.online=!!online;updateChrome();if(S.online&&S.session){try{await syncQueue(false);await ensureCatalogFresh(false,false);await refreshRequests(false);toast('اینترنت وصل شد؛ همگام‌سازی انجام شد')}catch(e){toast('اینترنت وصل است ولی Sync کامل نشد',true)}}};
+window.addEventListener('online',()=>window.hgOnNetworkChanged(true));
+window.addEventListener('offline',()=>window.hgOnNetworkChanged(false));
+$('#loginForm').onsubmit=async event=>{event.preventDefault();await loginFormSubmit()};async function loginFormSubmit(){const b=$('#loginBtn');b.disabled=true;$('#loginMsg').textContent='';try{await login($('#email').value.trim(),$('#password').value,$('#rememberLogin').checked);$('#password').value='';toast('ورود انجام شد')}catch(e){if(!S.profile?.is_active)clearLogin();setAuthUI();$('#loginMsg').textContent=e.message;if(S.session&&S.profile)toast(e.message,true)}finally{b.disabled=false}};$('#modalClose').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});$$('.navbtn').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+
+
+
+async function initApp(){
+  try{await loadOfflineCatalog()}catch{}
+  const rememberedEmail=localStorage.getItem(K.lastEmail)||'';
+  if($('#email')&&!$('#email').value&&rememberedEmail)$('#email').value=rememberedEmail;
+  setAuthUI();
+  updateChrome();
+  if(S.session)keepLoginFresh().then(()=>bootstrap()).catch(e=>{if(String(e.message).includes('فعال نشده')){clearLogin();setAuthUI();$('#loginMsg').textContent=e.message;}else toast(e.message,true);});
+}
+async function autoRequestCheck(){
+  if(!S.online||!S.session||document.visibilityState!=='visible')return;
+  try{await refreshRequests(false)}catch{}
+}
+window.addEventListener('focus',()=>{keepLoginFresh().then(()=>{autoCatalogCheck();autoRequestCheck()})});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){autoCatalogCheck();autoRequestCheck()}});
+setInterval(()=>{if(document.visibilityState==='visible'){autoCatalogCheck();autoRequestCheck()}},30000);
+initApp();
+})();
+</script></body></html>
