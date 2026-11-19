@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#f5f2ff">
+<title>قیمت فروش | هفت‌قلم</title>
+<style>
+:root{color-scheme:light;--ink:#231637;--dim:#5e5471;--border:#e6ddf6;--violet:#5c329b;--bg:#f7f4fd}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.8 Tahoma,Arial,sans-serif}
+[hidden]{display:none!important}
+main{max-width:760px;margin:auto;padding:24px 16px 36px}
+header{background:#efe6ff;border:1px solid #e6d8fa;border-radius:24px;padding:21px 23px;margin-bottom:15px}
+header small{font-weight:bold;color:var(--violet)}
+h1{font-size:clamp(22px,5vw,32px);margin:3px 0 0}
+p{margin:5px 0}
+header p,.muted{font-size:13px;color:var(--dim)}
+.panel{padding:16px;border:1px solid var(--border);border-radius:19px;background:white}
+form{display:grid;gap:10px;max-width:410px}
+label{display:grid;gap:4px;font-weight:bold;font-size:14px}
+input,button{font:inherit;min-height:44px;border-radius:11px}
+input{width:100%;border:1px solid #c7bcdb;padding:6px 11px;color:var(--ink);background:#fff}
+button{border:1px solid #ccbce8;background:#fff;padding:6px 13px;font-size:14px;color:var(--violet);font-weight:bold;cursor:pointer}
+button.primary{color:#fff;background:var(--violet);border-color:var(--violet)}
+button:disabled{opacity:.58;cursor:wait}
+input:focus-visible,button:focus-visible{outline:3px solid #9978d8;outline-offset:2px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.controls button:last-child{margin-inline-start:auto}
+ul{padding:0;margin:11px 0;list-style:none;display:grid;gap:8px}
+li{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 12px;border:1px solid var(--border);border-radius:13px;overflow-wrap:anywhere}
+li strong{display:block;font-size:15px}
+li .amount{flex:none;text-align:left;color:#412175;font-weight:bold;white-space:nowrap}
+li .amount small{display:block;font-weight:normal;color:var(--dim);line-height:1.45}
+li .missing{font-size:12px;color:#765531}
+#loginError,#status.error{color:#8d2240;font-size:13px}
+#more{width:100%}
+@media(max-width:380px){main{padding-inline:10px}.panel{padding:12px}li{gap:7px}li strong{font-size:13px}li .amount{font-size:13px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <small>هفت‌قلم · ویژه ادمین اینستاگرام</small>
+  <h1>استعلام قیمت فروش</h1>
+  <p>نام محصول را جست‌وجو کن و قیمت نهایی را به تومان ببین.</p>
+</header>
+<section class="panel" id="login">
+  <form id="signIn">
+    <label>ایمیل<input id="email" type="email" dir="ltr" autocomplete="username" required></label>
+    <label>رمز عبور<input id="password" type="password" dir="ltr" autocomplete="current-password" required></label>
+    <button class="primary" id="enter">ورود به پنل قیمت</button>
+    <div id="loginError" role="alert"></div>
+  </form>
+</section>
+<section class="panel" id="panel" hidden>
+  <label>جست‌وجوی محصول<input id="search" type="search" placeholder="نام محصول، برند یا دسته‌بندی" autocomplete="off"></label>
+  <div class="controls"><button type="button" id="refresh" class="primary">تازه‌سازی قیمت‌ها</button><button type="button" id="logout">خروج</button></div>
+  <div id="status" class="muted" role="status"></div>
+  <p class="muted" id="count"></p>
+  <ul id="results" aria-label="محصولات و قیمت فروش"></ul>
+  <button type="button" id="more" hidden>نمایش موارد بیشتر</button>
+</section>
+</main>
+<script>
+'use strict';
+const URL_BASE='https://segfnoaagfsrwkqkwkye.supabase.co';
+const KEY='sb_publishable_km8F_B9bD7NwKiKjbDL7Cg_fq70L3TR';
+const SESSION_KEY='haftghalam.instagram.price-reader.session.v1';
+const $=id=>document.getElementById(id);
+const money=new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2});
+const time=new Intl.DateTimeFormat('fa-IR',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Tehran'});
+let session=null,rows=[],limit=50,generation=0,loadedAt=0,fetching=null,refreshing=null;
+const normalize=v=>String(v??'').toLowerCase().replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[۰-۹٠-٩]/g,c=>String(c.charCodeAt(0)-(c>='۰'?1776:1632))).replace(/[\u200c\u200d\u200e\u200f]/g,' ').replace(/\s+/g,' ').trim();
+try{session=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null')}catch{}
+function setSession(value){
+  session=value?.access_token?value:null;
+  try{if(session)sessionStorage.setItem(SESSION_KEY,JSON.stringify(session));else sessionStorage.removeItem(SESSION_KEY)}catch{}
+}
+function showPanel(show){
+  $('login').hidden=show;$('panel').hidden=!show;
+}
+function showStatus(message,error=false){
+  $('status').textContent=message;$('status').classList.toggle('error',error);
+}
+async function api(path,{body,token}={}){
+  const headers={apikey:KEY,'Content-Type':'application/json'};
+  if(token)headers.Authorization='Bearer '+token;
+  const r=await fetch(URL_BASE+path,{method:'POST',headers,body:JSON.stringify(body??{}),cache:'no-store',signal:AbortSignal.timeout(20000)});
+  const data=await r.json().catch(()=>null);
+  if(!r.ok){const e=new Error(data?.message||data?.error_description||data?.msg||'ارتباط با مرجع قیمت ناموفق بود.');e.status=r.status;e.code=data?.code||data?.error_code;throw e;}
+  return data;
+}
+function clearSession(){
+  generation++;setSession(null);rows=[];limit=50;loadedAt=0;fetching=null;refreshing=null;
+  $('search').value='';$('refresh').disabled=false;$('count').textContent='';$('results').replaceChildren();$('more').hidden=true;
+  showPanel(false);
+}
+function renew(){
+  if(refreshing)return refreshing;
+  if(!session?.refresh_token)return Promise.reject(Object.assign(new Error('دوباره وارد حساب شو.'),{status:401}));
+  const id=generation;
+  const job=api('/auth/v1/token?grant_type=refresh_token',{body:{refresh_token:session.refresh_token}})
+    .then(value=>{if(id===generation)setSession(value);})
+    .finally(()=>{if(refreshing===job)refreshing=null;});
+  return refreshing=job;
+}
+function render(){
+  const words=normalize($('search').value).split(' ').filter(Boolean);
+  const matches=rows.filter(row=>words.every(w=>row.search.includes(w)));
+  $('count').textContent=money.format(matches.length)+' نتیجه';
+  const fragment=document.createDocumentFragment();
+  for(const row of matches.slice(0,limit)){
+    const item=document.createElement('li'),desc=document.createElement('div'),title=document.createElement('strong');
+    title.textContent=row.name;desc.append(title);
+    if(row.meta){const meta=document.createElement('div');meta.className='muted';meta.textContent=row.meta;desc.append(meta);}
+    const price=document.createElement('div');
+    price.className='amount'+(row.price>0?'':' missing');
+    if(row.price>0){const n=document.createElement('bdi'),unit=document.createElement('small');n.textContent=money.format(row.price);unit.textContent='تومان';price.append(n,unit);}
+    else price.textContent='قیمت ثبت نشده';
+    item.append(desc,price);fragment.append(item);
+  }
+  $('results').replaceChildren(fragment);
+  $('more').hidden=matches.length<=limit;
+}
+function loadPrices(){
+  if(fetching)return fetching;
+  if(!session)return Promise.resolve();
+  const id=generation;
+  const query=()=>api('/rest/v1/rpc/hg_instagram_price_list_127',{token:session.access_token});
+  $('refresh').disabled=true;
+  if(!loadedAt)showStatus('در حال دریافت قیمت‌ها…');
+  const job=(async()=>{
+    try{
+      if(Number(session.expires_at)*1000<Date.now()+45000)await renew();
+      if(id!==generation)return;
+      let response;
+      try{response=await query();}
+      catch(error){if(error.status!==401)throw error;await renew();if(id!==generation)return;response=await query();}
+      if(id!==generation)return;
+      if(!Array.isArray(response))throw new Error('فهرست قیمت معتبر دریافت نشد.');
+      rows=response.map(x=>({
+        name:String(x.product_name||'محصول'),meta:[x.brand,x.category].filter(Boolean).join(' · '),price:Number(x.sale_price)||0,
+        search:normalize([x.product_name,x.brand,x.category,x.product_ref].filter(Boolean).join(' '))
+      }));
+      loadedAt=Date.now();
+      showStatus('آخرین دریافت از مرجع · '+time.format(new Date(loadedAt)));
+      render();
+    }catch(error){
+      if(id!==generation)return;
+      if(error.status===401||error.status===403||error.code==='42501'){
+        clearSession();$('loginError').textContent=error.message;
+      }else{
+        showStatus(loadedAt?'قیمت‌ها تازه نشدند. قبل از اعلام قیمت، دوباره تازه‌سازی کن.':'قیمت‌ها دریافت نشدند. دوباره تلاش کن.',true);
+      }
+    }finally{if(id===generation)$('refresh').disabled=false;}
+  })().finally(()=>{if(fetching===job)fetching=null;});
+  return fetching=job;
+}
+$('signIn').addEventListener('submit',async e=>{
+  e.preventDefault();$('enter').disabled=true;$('loginError').textContent='';
+  try{
+    const value=await api('/auth/v1/token?grant_type=password',{body:{email:$('email').value.trim(),password:$('password').value}});
+    $('password').value='';
+    if(!value?.access_token)throw new Error('ورود کامل نشد.');
+    setSession(value);showPanel(true);await loadPrices();if(session)$('search').focus();
+  }catch(error){$('loginError').textContent=error.code==='invalid_credentials'||/invalid login credentials/i.test(error.message)?'ایمیل یا رمز عبور درست نیست.':'ورود انجام نشد. دوباره تلاش کن.';}
+  finally{$('enter').disabled=false;}
+});
+$('logout').onclick=()=>{const token=session?.access_token;clearSession();$('loginError').textContent='';if(token)api('/auth/v1/logout',{token}).catch(()=>{});};
+$('search').oninput=()=>{limit=50;render();};
+$('more').onclick=()=>{limit+=50;render();};
+$('refresh').onclick=()=>loadPrices();
+window.addEventListener('focus',()=>{if(Date.now()-loadedAt>45000)loadPrices();});
+window.addEventListener('online',loadPrices);
+setInterval(()=>{if(!document.hidden)loadPrices();},60000);
+if(session){showPanel(true);loadPrices();}
+</script>
+</body>
+</html>
